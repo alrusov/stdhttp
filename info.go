@@ -58,7 +58,7 @@ type runtimeBlock struct {
 	LogFile        string    `json:"logFile"`
 	AllocSys       uint64    `json:"allocSys"`
 	HeapSys        uint64    `json:"heapSys"`
-	HeapAlloc      uint64    `json:"heapAlloc"`
+	StackSys       uint64    `json:"stackSys"`
 	NumCPU         int       `json:"numCPU"`
 	GoMaxProcs     int       `json:"goMaxProcs"`
 	NumGoroutine   int       `json:"numGoroutine"`
@@ -218,7 +218,7 @@ func showInfo(w http.ResponseWriter) {
 	info.Runtime.IP = ip
 	info.Runtime.AllocSys = mem.Sys
 	info.Runtime.HeapSys = mem.HeapSys
-	info.Runtime.HeapAlloc = mem.HeapAlloc
+	info.Runtime.StackSys = mem.StackSys
 	info.Runtime.NumGoroutine = runtime.NumGoroutine()
 
 	info.LastLog = log.GetLastLog()
