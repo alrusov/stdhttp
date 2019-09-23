@@ -56,6 +56,7 @@ func root(w http.ResponseWriter) {
     <title>%s</title>
   </head>
   <body>
+      <h4>%s %s</h4>
       <ul>
         <li><a href="/info" target="info">Application info in the JSON format</a></li>
 		<li>Change logging level:%s</li>
@@ -63,7 +64,7 @@ func root(w http.ResponseWriter) {
       </ul>
   </body>
 </html>`,
-		misc.AppName(), levels, extra)
+		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, extra)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(s))
