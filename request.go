@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alrusov/bufpool"
 	"github.com/alrusov/config"
 )
 
@@ -63,8 +62,7 @@ func Request(method string, uri string, timeout int, opts map[string]string, dat
 		return nil, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
 	}
 
-	bodyBuf := bufpool.GetBuf()
-	_, err = bodyBuf.ReadFrom(resp.Body)
+	bodyBuf, _, err := ReadData(resp.Header, resp.Body)
 	if err != nil {
 		return nil, err
 	}

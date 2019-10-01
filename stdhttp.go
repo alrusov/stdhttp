@@ -5,7 +5,9 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/alrusov/bufpool"
 	"github.com/alrusov/log"
@@ -90,17 +92,16 @@ func ReturnRefresh(w http.ResponseWriter, r *http.Request, code int) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// ReadBody --
-func ReadBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err error) {
-	var body = r.Body
+// ReadData --
+func ReadData(header http.Header, body io.ReadCloser) (bodyBuf *bytes.Buffer, code int, err error) {
 	if body == nil {
 		code = http.StatusOK
 		return
 	}
 
-	if r.Header.Get("Content-Encoding") == "gzip" {
+	if header.Get("Content-Encoding") == "gzip" {
 		var b *gzip.Reader
-		b, err = gzip.NewReader(r.Body)
+		b, err = gzip.NewReader(body)
 		if b != nil {
 			defer b.Close()
 		}
@@ -124,6 +125,13 @@ func ReadBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err error) {
 
 	code = http.StatusOK
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// ReadRequestBody --
+func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err error) {
+	return ReadData(r.Header, r.Body)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -156,6 +164,21 @@ func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, data []
 	}
 
 	return err
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// CloneURLvalues --
+func CloneURLvalues(src url.Values) (dst url.Values) {
+	dst = make(url.Values, len(src))
+
+	for n, v := range src {
+		v2 := make([]string, len(v))
+		copy(v2, v)
+		dst[n] = v2
+	}
+
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
