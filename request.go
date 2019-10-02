@@ -49,9 +49,9 @@ func Request(method string, uri string, timeout int, opts map[string]string, dat
 			if strings.HasPrefix(k, ".") {
 				switch k {
 				case RequestOptionGzip:
-					withGzip = parseBoolOption(k)
+					withGzip = parseBoolOption(v)
 				case RequestOptionSkipTLSVerification:
-					skipTLSverification = parseBoolOption(k)
+					skipTLSverification = parseBoolOption(v)
 				}
 				continue
 			}
@@ -111,13 +111,13 @@ func Request(method string, uri string, timeout int, opts map[string]string, dat
 		return nil, err
 	}
 
-	if resp.StatusCode/100 != 2 {
-		return nil, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
-	}
-
 	bodyBuf, _, err := ReadData(resp.Header, resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode/100 != 2 {
+		return bodyBuf, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
 	}
 
 	return bodyBuf, nil
