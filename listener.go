@@ -3,7 +3,6 @@ package stdhttp
 import (
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -101,12 +100,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := strings.TrimRight(r.URL.Path, "/")
-
-	re, err := regexp.Compile(`/{2,}`)
-	if err == nil {
-		path = re.ReplaceAllString(path, "/")
-	}
+	path := NormalizeSlashes(r.URL.Path)
 
 	if h.handler.Handler(id, path, w, r) {
 		return

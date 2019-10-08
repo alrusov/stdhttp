@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/alrusov/bufpool"
 	"github.com/alrusov/log"
@@ -179,6 +181,18 @@ func CloneURLvalues(src url.Values) (dst url.Values) {
 	}
 
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+var (
+	reSlash = regexp.MustCompile(`/{2,}`)
+)
+
+func NormalizeSlashes(path string) string {
+	path = strings.TrimRight(path, "/")
+	path = reSlash.ReplaceAllString(path, "/")
+	return path
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
