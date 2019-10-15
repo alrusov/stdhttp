@@ -15,7 +15,7 @@ func TestNormalizeSlashes(t *testing.T) {
 		{"http://localhost", "http://localhost"},
 		{"http://localhost/", "http://localhost"},
 		{"http://localhost/////xxx/////yyy/zzz//", "http://localhost/xxx/yyy/zzz"},
-		{"http://localhost/////xxx///https://yyy/zzz//", "http://localhost/xxx/https:/yyy/zzz"},
+		{"http:////localhost/////xxx///?u=https:////yyy/zzz//", "http://localhost/xxx/?u=https://yyy/zzz"},
 	}
 
 	for i, p := range smp {
