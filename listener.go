@@ -90,7 +90,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	id := atomic.AddUint64(&connectionID, 1)
 
-	defer misc.LogProcessingTime(id, "http", t0)
+	defer misc.LogProcessingTime("", id, "http", "", t0)
 
 	log.Message(log.DEBUG, `[%d] New request %q from %q`, id, r.RequestURI, r.RemoteAddr)
 	defer log.Message(log.TRACE1, "[%d] Finished", id)
