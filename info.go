@@ -26,13 +26,15 @@ type infoBlock struct {
 }
 
 type applicationBlock struct {
-	Copyright string    `json:"copyright"`
-	Name      string    `json:"name"`
-	Version   string    `json:"version"`
-	BiildTime time.Time `json:"biildTime"`
-	GoVersion string    `json:"goVersion"`
-	OS        string    `json:"os"`
-	Arch      string    `json:"arch"`
+	Copyright   string    `json:"copyright"`
+	AppName     string    `json:"appName"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Version     string    `json:"version"`
+	BiildTime   time.Time `json:"biildTime"`
+	GoVersion   string    `json:"goVersion"`
+	OS          string    `json:"os"`
+	Arch        string    `json:"arch"`
 }
 
 type idDef struct {
@@ -81,9 +83,21 @@ var (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+// SetName --
+func SetName(name string, description string) {
+	if name != "" {
+		info.Application.Name = name
+	}
+	if description != "" {
+		info.Application.Description = description
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
 func initInfo() {
 	info.Application = &applicationBlock{
-		Name:      misc.AppName(),
+		AppName:   misc.AppName(),
 		Version:   misc.AppVersion(),
 		BiildTime: misc.BuildTimeTS(),
 		Copyright: misc.Copyright(),
