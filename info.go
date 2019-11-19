@@ -179,7 +179,7 @@ func initInfo() {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // AddEndpointsInfo --
-func AddEndpointsInfo(df map[string]string) {
+func AddEndpointsInfo(df misc.StringMap) {
 	if info.Application == nil {
 		initInfo()
 	}

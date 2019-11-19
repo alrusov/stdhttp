@@ -13,6 +13,7 @@ import (
 
 	"github.com/alrusov/bufpool"
 	"github.com/alrusov/config"
+	"github.com/alrusov/misc"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -34,7 +35,7 @@ func parseBoolOption(opt string) bool {
 
 // Request --
 // Don't forget call bufpool.PutBuf(returned_buf)
-func Request(method string, uri string, timeout int, opts map[string]string, data []byte) (*bytes.Buffer, error) {
+func Request(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, error) {
 	params := url.Values{}
 
 	if data == nil {

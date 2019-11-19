@@ -13,11 +13,12 @@ import (
 
 	"github.com/alrusov/bufpool"
 	"github.com/alrusov/log"
+	"github.com/alrusov/misc"
 )
 
 var (
 	// ContentTypes --
-	contentTypes = map[string]string{
+	contentTypes = misc.StringMap{
 		"text": "plain/text; charset=utf-8",
 		"json": "application/json; charset=utf-8",
 	}
