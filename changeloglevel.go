@@ -9,8 +9,8 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// ChangeLogLevel --
-func ChangeLogLevel(id uint64, w http.ResponseWriter, r *http.Request) {
+// changeLogLevel --
+func (h *HTTP) changeLogLevel(id uint64, path string, w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	levelName := strings.ToUpper(queryParams.Get("level"))
 

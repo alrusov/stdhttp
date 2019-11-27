@@ -106,19 +106,31 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.profiler(id, path, w, r) {
+		return
+	}
+
 	switch path {
 	case "":
-		root(w)
+		h.root(id, path, w, r)
 
 	case "/info":
-		showInfo(w)
+		h.showInfo(id, path, w, r)
 
 	case "/ping":
 		w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s", misc.AppName(), misc.AppVersion()))
 		w.WriteHeader(http.StatusNoContent)
 
 	case "/set-log-level":
-		ChangeLogLevel(id, w, r)
+		h.changeLogLevel(id, path, w, r)
+
+	case "/profiler-enable":
+		h.ListenerCfg.ProfilerEnabled = true
+		ReturnRefresh(w, r, http.StatusNoContent)
+
+	case "/profiler-disable":
+		h.ListenerCfg.ProfilerEnabled = false
+		ReturnRefresh(w, r, http.StatusNoContent)
 
 	default:
 		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)

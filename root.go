@@ -32,7 +32,7 @@ func MenuHighlight() (string, string) {
 	return `<span style="color: red; font-weight: bold;">`, `</span>`
 }
 
-func root(w http.ResponseWriter) {
+func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Request) {
 	levels := ""
 
 	_, _, level := log.GetCurrentLogLevel()
@@ -44,6 +44,22 @@ func root(w http.ResponseWriter) {
 		}
 		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=1">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
 	}
+
+	addProfilerItem := func(v bool, curr bool) string {
+		op := "enable"
+		if !v {
+			op = "disable"
+		}
+
+		opn, cls := "", ""
+		if v == curr {
+			opn, cls = MenuHighlight()
+		}
+
+		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=1">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
+	}
+
+	profiler := addProfilerItem(true, h.ListenerCfg.ProfilerEnabled) + addProfilerItem(false, h.ListenerCfg.ProfilerEnabled)
 
 	extra := ""
 	if extraRootItemFunc != nil {
@@ -60,11 +76,12 @@ func root(w http.ResponseWriter) {
       <ul>
         <li><a href="/info" target="info">Application info in the JSON format</a></li>
 		<li>Change logging level:%s</li>
+		<li>Profiler is %s</li>
 		%s
       </ul>
   </body>
 </html>`,
-		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, extra)
+		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, profiler, extra)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(s))

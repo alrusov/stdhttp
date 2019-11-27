@@ -43,27 +43,28 @@ type idDef struct {
 }
 
 type runtimeBlock struct {
-	StartTime      time.Time `json:"startTime"`
-	Now            time.Time `json:"now"`
-	Uptime         int64     `json:"upTime"`
-	PID            int       `json:"pid"`
-	User           idDef     `json:"user"`
-	Group          idDef     `json:"group"`
-	EffectiveUser  idDef     `json:"effectiveUser"`
-	EffectiveGroup idDef     `json:"effectiveGroup"`
-	Host           string    `json:"host"`
-	IP             []string  `json:"ip"`
-	CommandLine    string    `json:"commandLine"`
-	Application    string    `json:"application"`
-	WorkDir        string    `json:"workDir"`
-	LogLevel       string    `json:"logLevel"`
-	LogFile        string    `json:"logFile"`
-	AllocSys       uint64    `json:"allocSys"`
-	HeapSys        uint64    `json:"heapSys"`
-	StackSys       uint64    `json:"stackSys"`
-	NumCPU         int       `json:"numCPU"`
-	GoMaxProcs     int       `json:"goMaxProcs"`
-	NumGoroutine   int       `json:"numGoroutine"`
+	StartTime       time.Time `json:"startTime"`
+	Now             time.Time `json:"now"`
+	Uptime          int64     `json:"upTime"`
+	PID             int       `json:"pid"`
+	User            idDef     `json:"user"`
+	Group           idDef     `json:"group"`
+	EffectiveUser   idDef     `json:"effectiveUser"`
+	EffectiveGroup  idDef     `json:"effectiveGroup"`
+	Host            string    `json:"host"`
+	IP              []string  `json:"ip"`
+	CommandLine     string    `json:"commandLine"`
+	Application     string    `json:"application"`
+	WorkDir         string    `json:"workDir"`
+	LogLevel        string    `json:"logLevel"`
+	LogFile         string    `json:"logFile"`
+	ProfilerEnabled bool      `json:"profilerEnabled"`
+	AllocSys        uint64    `json:"allocSys"`
+	HeapSys         uint64    `json:"heapSys"`
+	StackSys        uint64    `json:"stackSys"`
+	NumCPU          int       `json:"numCPU"`
+	GoMaxProcs      int       `json:"goMaxProcs"`
+	NumGoroutine    int       `json:"numGoroutine"`
 }
 
 type endpointBlock struct {
@@ -173,6 +174,18 @@ func initInfo() {
 			Name:        "/set-log-level",
 			Description: "Temporary log level change",
 		},
+		{
+			Name:        "/profiler-enable",
+			Description: "Enable profiler",
+		},
+		{
+			Name:        "/profiler-disable",
+			Description: "Disable profiler",
+		},
+		{
+			Name:        "/debug",
+			Description: "Profiler",
+		},
 	}
 }
 
@@ -203,7 +216,7 @@ func SetExtraInfoFunc(f ExtraInfoFunc) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func showInfo(w http.ResponseWriter) {
+func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.Request) {
 	infoMutex.Lock()
 
 	if info.Application == nil {
@@ -227,9 +240,10 @@ func showInfo(w http.ResponseWriter) {
 
 	info.Runtime.Now = misc.NowUTC()
 	info.Runtime.Uptime = int64(info.Runtime.Now.Sub(info.Runtime.StartTime).Seconds())
+	info.Runtime.IP = ip
 	_, _, info.Runtime.LogLevel = log.GetCurrentLogLevel()
 	info.Runtime.LogFile = log.FileName()
-	info.Runtime.IP = ip
+	info.Runtime.ProfilerEnabled = h.ListenerCfg.ProfilerEnabled
 	info.Runtime.AllocSys = mem.Sys
 	info.Runtime.HeapSys = mem.HeapSys
 	info.Runtime.StackSys = mem.StackSys
