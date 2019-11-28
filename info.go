@@ -188,7 +188,7 @@ func initInfo() {
 			Description: "Disable profiler",
 		},
 		{
-			Name:        "/debug",
+			Name:        "/debug/pprof",
 			Description: "Profiler",
 		},
 	}
