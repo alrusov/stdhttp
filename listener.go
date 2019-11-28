@@ -125,11 +125,15 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.changeLogLevel(id, path, w, r)
 
 	case "/profiler-enable":
-		h.ListenerCfg.ProfilerEnabled = true
+		if commonConfig != nil {
+			commonConfig.ProfilerEnabled = true
+		}
 		ReturnRefresh(w, r, http.StatusNoContent)
 
 	case "/profiler-disable":
-		h.ListenerCfg.ProfilerEnabled = false
+		if commonConfig != nil {
+			commonConfig.ProfilerEnabled = false
+		}
 		ReturnRefresh(w, r, http.StatusNoContent)
 
 	default:

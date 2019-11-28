@@ -45,21 +45,26 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=1">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
 	}
 
-	addProfilerItem := func(v bool, curr bool) string {
+	prfEnabled := false
+	if commonConfig != nil {
+		prfEnabled = commonConfig.ProfilerEnabled
+	}
+
+	addProfilerItem := func(v bool) string {
 		op := "enable"
 		if !v {
 			op = "disable"
 		}
 
 		opn, cls := "", ""
-		if v == curr {
+		if v == prfEnabled {
 			opn, cls = MenuHighlight()
 		}
 
 		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=1">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
 	}
 
-	profiler := addProfilerItem(true, h.ListenerCfg.ProfilerEnabled) + addProfilerItem(false, h.ListenerCfg.ProfilerEnabled)
+	profiler := addProfilerItem(true) + addProfilerItem(false)
 
 	extra := ""
 	if extraRootItemFunc != nil {

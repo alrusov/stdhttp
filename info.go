@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alrusov/config"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
@@ -76,6 +77,8 @@ type endpointBlock struct {
 type ExtraInfoFunc func() interface{}
 
 var (
+	commonConfig *config.Common
+
 	infoMutex = new(sync.Mutex)
 	extraFunc = ExtraInfoFunc(nil)
 
@@ -97,6 +100,8 @@ func SetName(name string, description string) {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func initInfo() {
+	commonConfig = config.GetCommon()
+
 	info.Application = &applicationBlock{
 		AppName:   misc.AppName(),
 		Version:   misc.AppVersion(),
@@ -243,7 +248,9 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	info.Runtime.IP = ip
 	_, _, info.Runtime.LogLevel = log.GetCurrentLogLevel()
 	info.Runtime.LogFile = log.FileName()
-	info.Runtime.ProfilerEnabled = h.ListenerCfg.ProfilerEnabled
+	if commonConfig != nil {
+		info.Runtime.ProfilerEnabled = commonConfig.ProfilerEnabled
+	}
 	info.Runtime.AllocSys = mem.Sys
 	info.Runtime.HeapSys = mem.HeapSys
 	info.Runtime.StackSys = mem.StackSys
