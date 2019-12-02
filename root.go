@@ -45,9 +45,9 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=1">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
 	}
 
-	prfEnabled := false
+	profilerEnabled := false
 	if commonConfig != nil {
-		prfEnabled = commonConfig.ProfilerEnabled
+		profilerEnabled = commonConfig.ProfilerEnabled
 	}
 
 	addProfilerItem := func(v bool) string {
@@ -57,14 +57,19 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		}
 
 		opn, cls := "", ""
-		if v == prfEnabled {
+		if v == profilerEnabled {
 			opn, cls = MenuHighlight()
 		}
 
 		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=1">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
 	}
 
-	profiler := addProfilerItem(true) + addProfilerItem(false)
+	profilerSwitch := addProfilerItem(true) + addProfilerItem(false)
+
+	profiler := ""
+	if profilerEnabled {
+		profiler = `<li><a href="debug/pprof" target="pprof">Show profiler</a></li>`
+	}
 
 	extra := ""
 	if extraRootItemFunc != nil {
@@ -83,10 +88,11 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		<li>Change logging level:%s</li>
 		<li>Profiler is %s</li>
 		%s
+		%s
       </ul>
   </body>
 </html>`,
-		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, profiler, extra)
+		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, profilerSwitch, profiler, extra)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(s))
