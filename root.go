@@ -68,7 +68,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 
 	profiler := ""
 	if profilerEnabled {
-		profiler = `<li><a href="debug/pprof" target="pprof">Show profiler</a></li>`
+		profiler = `<li><a href="debug/pprof/" target="pprof">Show profiler</a></li>`
 	}
 
 	extra := ""
