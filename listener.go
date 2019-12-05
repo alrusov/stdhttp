@@ -16,22 +16,27 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// HTTP --
-type HTTP struct {
-	ListenerCfg *config.Listener
-	Mutex       *sync.Mutex
-	srv         *http.Server
+type (
+	// HTTP --
+	HTTP struct {
+		listenerCfg       *config.Listener
+		commonConfig      *config.Common
+		mutex             *sync.Mutex
+		srv               *http.Server
+		handler           Handler
+		extraFunc         ExtraInfoFunc
+		info              *infoBlock
+		connectionID      uint64
+		extraRootItemFunc ExtraRootItemFunc
+	}
 
-	handler Handler
-}
+	// Handler --
+	Handler interface {
+		Handler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool
+	}
 
-// Handler --
-type Handler interface {
-	Handler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool
-}
-
-var (
-	connectionID = uint64(0)
+	// ExtraRootItemFunc --
+	ExtraRootItemFunc func() []string
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -39,9 +44,13 @@ var (
 // NewListener --
 func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	h := &HTTP{
-		ListenerCfg: listenerCfg,
-		Mutex:       new(sync.Mutex),
-		handler:     handler,
+		listenerCfg:  listenerCfg,
+		commonConfig: config.GetCommon(),
+		mutex:        new(sync.Mutex),
+		handler:      handler,
+		extraFunc:    ExtraInfoFunc(nil),
+		info:         &infoBlock{},
+		connectionID: 0,
 	}
 
 	timeout := time.Duration(listenerCfg.Timeout) * time.Second
@@ -52,6 +61,8 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		ReadHeaderTimeout: timeout,
 	}
 
+	h.initInfo()
+
 	log.Message(log.INFO, `Listener created on "%s"`, listenerCfg.Addr)
 
 	return h, nil
@@ -60,7 +71,7 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 // Start --
 func (h *HTTP) Start() error {
 	var err error
-	cert := strings.TrimSpace(h.ListenerCfg.SSLCombinedPem)
+	cert := strings.TrimSpace(h.listenerCfg.SSLCombinedPem)
 
 	if cert == "" {
 		err = h.srv.ListenAndServe()
@@ -88,19 +99,27 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer panic.SaveStackToLog()
 
-	id := atomic.AddUint64(&connectionID, 1)
-
-	defer misc.LogProcessingTime("", id, "http", "", t0)
-
+	id := atomic.AddUint64(&h.connectionID, 1)
 	log.Message(log.DEBUG, `[%d] New request %q from %q`, id, r.RequestURI, r.RemoteAddr)
-	defer log.Message(log.TRACE1, "[%d] Finished", id)
 
 	if !misc.AppStarted() {
 		Error(id, false, w, http.StatusInternalServerError, "Server stopped", nil)
 		return
 	}
 
+	processed := true
 	path := NormalizeSlashes(r.URL.Path)
+
+	defer func() {
+		if !processed {
+			path = url404
+		} else if path == "" {
+			path = "/"
+		}
+		h.info.Runtime.Requests.inc()
+		h.updateEndpointStat(path)
+		misc.LogProcessingTime("", id, "http", "", t0)
+	}()
 
 	if h.handler.Handler(id, path, w, r) {
 		return
@@ -125,18 +144,15 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.changeLogLevel(id, path, w, r)
 
 	case "/profiler-enable":
-		if commonConfig != nil {
-			commonConfig.ProfilerEnabled = true
-		}
+		h.commonConfig.ProfilerEnabled = true
 		ReturnRefresh(w, r, http.StatusNoContent)
 
 	case "/profiler-disable":
-		if commonConfig != nil {
-			commonConfig.ProfilerEnabled = false
-		}
+		h.commonConfig.ProfilerEnabled = false
 		ReturnRefresh(w, r, http.StatusNoContent)
 
 	default:
+		processed = false
 		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
 	}
 	return

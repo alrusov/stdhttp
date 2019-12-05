@@ -17,7 +17,7 @@ func (h *HTTP) profiler(id uint64, path string, w http.ResponseWriter, r *http.R
 		return false
 	}
 
-	if commonConfig == nil || !commonConfig.ProfilerEnabled {
+	if !h.commonConfig.ProfilerEnabled {
 		Error(id, false, w, http.StatusNotFound, `Profiler is disabled`, nil)
 		return true
 	}

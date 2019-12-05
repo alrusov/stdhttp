@@ -8,99 +8,102 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/alrusov/config"
+	"github.com/alrusov/loadavg"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-type infoBlock struct {
-	Application *applicationBlock `json:"applicaion"`
-	Runtime     *runtimeBlock     `json:"runtime"`
-	Extra       interface{}       `json:"extra"`
-	LastLog     interface{}       `json:"lastLog"`
-	Endpoints   []endpointBlock   `json:"endpoints"`
-}
+const url404 = `<<< 404 >>>`
 
-type applicationBlock struct {
-	Copyright   string    `json:"copyright"`
-	AppName     string    `json:"appName"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Version     string    `json:"version"`
-	BiildTime   time.Time `json:"biildTime"`
-	GoVersion   string    `json:"goVersion"`
-	OS          string    `json:"os"`
-	Arch        string    `json:"arch"`
-}
+type (
+	infoBlock struct {
+		Application *applicationBlock        `json:"applicaion"`
+		Runtime     *runtimeBlock            `json:"runtime"`
+		Endpoints   map[string]*endpointInfo `json:"endpoints"`
+		LastLog     interface{}              `json:"lastLog"`
+		Extra       interface{}              `json:"extra"`
+	}
 
-type idDef struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
+	applicationBlock struct {
+		Copyright   string    `json:"copyright"`
+		AppName     string    `json:"appName"`
+		Name        string    `json:"name"`
+		Description string    `json:"description"`
+		Version     string    `json:"version"`
+		BiildTime   time.Time `json:"biildTime"`
+		GoVersion   string    `json:"goVersion"`
+		OS          string    `json:"os"`
+		Arch        string    `json:"arch"`
+	}
 
-type runtimeBlock struct {
-	StartTime       time.Time `json:"startTime"`
-	Now             time.Time `json:"now"`
-	Uptime          int64     `json:"upTime"`
-	PID             int       `json:"pid"`
-	User            idDef     `json:"user"`
-	Group           idDef     `json:"group"`
-	EffectiveUser   idDef     `json:"effectiveUser"`
-	EffectiveGroup  idDef     `json:"effectiveGroup"`
-	Host            string    `json:"host"`
-	IP              []string  `json:"ip"`
-	CommandLine     string    `json:"commandLine"`
-	Application     string    `json:"application"`
-	WorkDir         string    `json:"workDir"`
-	LogLevel        string    `json:"logLevel"`
-	LogFile         string    `json:"logFile"`
-	ProfilerEnabled bool      `json:"profilerEnabled"`
-	AllocSys        uint64    `json:"allocSys"`
-	HeapSys         uint64    `json:"heapSys"`
-	StackSys        uint64    `json:"stackSys"`
-	NumCPU          int       `json:"numCPU"`
-	GoMaxProcs      int       `json:"goMaxProcs"`
-	NumGoroutine    int       `json:"numGoroutine"`
-}
+	idDef struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	}
 
-type endpointBlock struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
+	runtimeBlock struct {
+		StartTime       time.Time `json:"startTime"`
+		Now             time.Time `json:"now"`
+		Uptime          int64     `json:"upTime"`
+		PID             int       `json:"pid"`
+		User            idDef     `json:"user"`
+		Group           idDef     `json:"group"`
+		EffectiveUser   idDef     `json:"effectiveUser"`
+		EffectiveGroup  idDef     `json:"effectiveGroup"`
+		Host            string    `json:"host"`
+		IP              []string  `json:"ip"`
+		CommandLine     string    `json:"commandLine"`
+		Application     string    `json:"application"`
+		WorkDir         string    `json:"workDir"`
+		LogLevel        string    `json:"logLevel"`
+		LogFile         string    `json:"logFile"`
+		ProfilerEnabled bool      `json:"profilerEnabled"`
+		AllocSys        uint64    `json:"allocSys"`
+		HeapSys         uint64    `json:"heapSys"`
+		StackSys        uint64    `json:"stackSys"`
+		NumCPU          int       `json:"numCPU"`
+		GoMaxProcs      int       `json:"goMaxProcs"`
+		NumGoroutine    int       `json:"numGoroutine"`
+		LoadAvgPeriod   int       `json:"loadAvgPeriod"`
+		Requests        *urlStat  `json:"requests"`
+	}
 
-// ExtraInfoFunc --
-type ExtraInfoFunc func() interface{}
+	endpointInfo struct {
+		Description string   `json:"description"`
+		Stat        *urlStat `json:"stat"`
+	}
 
-var (
-	commonConfig *config.Common
+	urlStat struct {
+		la      *loadavg.LoadAvg
+		Total   int64   `json:"total"`
+		LoadAvg float64 `json:"loadAvg"`
+	}
 
-	infoMutex = new(sync.Mutex)
-	extraFunc = ExtraInfoFunc(nil)
-
-	info = &infoBlock{}
+	// ExtraInfoFunc --
+	ExtraInfoFunc func() interface{}
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // SetName --
-func SetName(name string, description string) {
+func (h *HTTP) SetName(name string, description string) {
 	if name != "" {
-		info.Application.Name = name
+		h.info.Application.Name = name
 	}
 	if description != "" {
-		info.Application.Description = description
+		h.info.Application.Description = description
 	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func initInfo() {
-	commonConfig = config.GetCommon()
+func (h *HTTP) initInfo() {
+	info := h.info
 
 	info.Application = &applicationBlock{
 		AppName:   misc.AppName(),
@@ -127,10 +130,12 @@ func initInfo() {
 		EffectiveGroup: idDef{
 			ID: os.Getegid(),
 		},
-		Application: misc.AppFullName(),
-		WorkDir:     misc.AppWorkDir(),
-		NumCPU:      runtime.NumCPU(),
-		GoMaxProcs:  runtime.GOMAXPROCS(-1),
+		Application:   misc.AppFullName(),
+		WorkDir:       misc.AppWorkDir(),
+		NumCPU:        runtime.NumCPU(),
+		GoMaxProcs:    runtime.GOMAXPROCS(-1),
+		LoadAvgPeriod: h.commonConfig.LoadAvgPeriod,
+		Requests:      h.newStat(),
 	}
 
 	cmd := ""
@@ -162,74 +167,93 @@ func initInfo() {
 		info.Runtime.EffectiveGroup.Name = g.Name
 	}
 
-	info.Endpoints = []endpointBlock{
-		endpointBlock{
-			Name:        "/",
-			Description: "Root page",
-		},
-		{
-			Name:        "/info",
-			Description: "Get information about the application",
-		},
-		{
-			Name:        "/ping",
-			Description: "Checking if the application running",
-		},
-		{
-			Name:        "/set-log-level",
-			Description: "Temporary log level change",
-		},
-		{
-			Name:        "/profiler-enable",
-			Description: "Enable profiler",
-		},
-		{
-			Name:        "/profiler-disable",
-			Description: "Disable profiler",
-		},
-		{
-			Name:        "/debug/pprof",
-			Description: "Profiler",
-		},
-	}
+	info.Endpoints = make(map[string]*endpointInfo)
+	h.AddEndpointsInfo(misc.StringMap{
+		url404:              "Invalid endpoint",
+		"/":                 "Root page",
+		"/info":             "Get information about the application",
+		"/ping":             "Checking if the application running",
+		"/set-log-level":    "Temporary log level change",
+		"/profiler-enable":  "Enable profiler",
+		"/profiler-disable": "Disable profiler",
+		"/debug/pprof":      "Profiler",
+	})
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // AddEndpointsInfo --
-func AddEndpointsInfo(df misc.StringMap) {
-	if info.Application == nil {
-		initInfo()
+func (h *HTTP) AddEndpointsInfo(list misc.StringMap) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	h.addEndpointsInfo(list)
+}
+
+func (h *HTTP) addEndpointsInfo(list misc.StringMap) {
+	for name, descr := range list {
+		h.info.Endpoints[name] =
+			&endpointInfo{
+				Description: descr,
+				Stat:        h.newStat(),
+			}
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+func (h *HTTP) newStat() *urlStat {
+	return &urlStat{
+		la: loadavg.Init(h.commonConfig.LoadAvgPeriod),
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+func (h *HTTP) updateEndpointStat(path string) {
+	h.mutex.Lock()
+	h.mutex.Unlock()
+
+	ep, exists := h.info.Endpoints[path]
+	if !exists {
+		h.addEndpointsInfo(misc.StringMap{path: "<<< NO DESCRIPTION >>>"})
+		ep, exists = h.info.Endpoints[path]
+		if !exists {
+			return
+		}
 	}
 
-	for n, v := range df {
-		info.Endpoints = append(info.Endpoints,
-			endpointBlock{
-				Name:        n,
-				Description: v,
-			},
-		)
-	}
+	ep.Stat.inc()
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+func (s *urlStat) inc() {
+	atomic.AddInt64(&s.Total, 1)
+	s.la.Add(1)
+}
+
+func (s *urlStat) update() {
+	s.LoadAvg = s.la.Value()
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // SetExtraInfoFunc --
-func SetExtraInfoFunc(f ExtraInfoFunc) {
-	extraFunc = f
+func (h *HTTP) SetExtraInfoFunc(f ExtraInfoFunc) {
+	h.extraFunc = f
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.Request) {
-	infoMutex.Lock()
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 
-	if info.Application == nil {
-		initInfo()
-	}
+	info := h.info
 
-	if extraFunc != nil {
-		info.Extra = extraFunc()
+	if h.extraFunc != nil {
+		h.info.Extra = h.extraFunc()
 	}
 
 	ip := []string{}
@@ -248,19 +272,20 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	info.Runtime.IP = ip
 	_, _, info.Runtime.LogLevel = log.GetCurrentLogLevel()
 	info.Runtime.LogFile = log.FileName()
-	if commonConfig != nil {
-		info.Runtime.ProfilerEnabled = commonConfig.ProfilerEnabled
-	}
+	info.Runtime.ProfilerEnabled = h.commonConfig.ProfilerEnabled
 	info.Runtime.AllocSys = mem.Sys
 	info.Runtime.HeapSys = mem.HeapSys
 	info.Runtime.StackSys = mem.StackSys
 	info.Runtime.NumGoroutine = runtime.NumGoroutine()
+	info.Runtime.Requests.update()
 
 	info.LastLog = log.GetLastLog()
 
-	SendJSON(w, http.StatusOK, info)
+	for _, ep := range info.Endpoints {
+		ep.Stat.update()
+	}
 
-	infoMutex.Unlock()
+	SendJSON(w, http.StatusOK, info)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

@@ -13,22 +13,13 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// ExtraRootItemFunc --
-type ExtraRootItemFunc func() []string
-
-var (
-	extraRootItemFunc ExtraRootItemFunc
-)
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
 // SetRootItemsFunc --
-func SetRootItemsFunc(f ExtraRootItemFunc) {
-	extraRootItemFunc = f
+func (h *HTTP) SetRootItemsFunc(f ExtraRootItemFunc) {
+	h.extraRootItemFunc = f
 }
 
 // MenuHighlight --
-func MenuHighlight() (string, string) {
+func (h *HTTP) MenuHighlight() (string, string) {
 	return `<span style="color: red; font-weight: bold;">`, `</span>`
 }
 
@@ -40,15 +31,12 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 	for _, name := range log.GetLogLevels() {
 		opn, cls := "", ""
 		if level == name {
-			opn, cls = MenuHighlight()
+			opn, cls = h.MenuHighlight()
 		}
 		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=1">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
 	}
 
-	profilerEnabled := false
-	if commonConfig != nil {
-		profilerEnabled = commonConfig.ProfilerEnabled
-	}
+	profilerEnabled := h.commonConfig.ProfilerEnabled
 
 	addProfilerItem := func(v bool) string {
 		op := "enable"
@@ -58,7 +46,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 
 		opn, cls := "", ""
 		if v == profilerEnabled {
-			opn, cls = MenuHighlight()
+			opn, cls = h.MenuHighlight()
 		}
 
 		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=1">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
@@ -72,8 +60,8 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 	}
 
 	extra := ""
-	if extraRootItemFunc != nil {
-		extra = "<li>" + strings.Join(extraRootItemFunc(), "</li><li>")
+	if h.extraRootItemFunc != nil {
+		extra = "<li>" + strings.Join(h.extraRootItemFunc(), "</li><li>")
 	}
 
 	s := fmt.Sprintf(`<!DOCTYPE html>
