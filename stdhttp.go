@@ -16,29 +16,36 @@ import (
 	"github.com/alrusov/misc"
 )
 
+const (
+	// ContentTypeText --
+	ContentTypeText = "text"
+	// ContentTypeJSON --
+	ContentTypeJSON = "json"
+)
+
 var (
 	// ContentTypes --
 	contentTypes = misc.StringMap{
-		"text": "plain/text; charset=utf-8",
-		"json": "application/json; charset=utf-8",
+		ContentTypeText: "plain/text; charset=utf-8",
+		ContentTypeJSON: "application/json; charset=utf-8",
 	}
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // ContentHeader --
-func ContentHeader(code string) (string, error) {
-	h, exists := contentTypes[code]
+func ContentHeader(contentType string) (string, error) {
+	h, exists := contentTypes[contentType]
 	if !exists {
-		return "", fmt.Errorf(`Illegal content code "%s"`, code)
+		return "", fmt.Errorf(`Illegal content code "%s"`, contentType)
 	}
 
 	return h, nil
 }
 
 // WriteContentHeader --
-func WriteContentHeader(w http.ResponseWriter, code string) error {
-	h, err := ContentHeader(code)
+func WriteContentHeader(w http.ResponseWriter, contentType string) error {
+	h, err := ContentHeader(contentType)
 	if err != nil {
 		return err
 	}
@@ -50,14 +57,14 @@ func WriteContentHeader(w http.ResponseWriter, code string) error {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // SendJSON --
-func SendJSON(w http.ResponseWriter, code int, data interface{}) {
+func SendJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	m, err := json.Marshal(data)
 	if err != nil {
 		m = []byte(err.Error())
 	}
 
 	WriteContentHeader(w, "json")
-	w.WriteHeader(code)
+	w.WriteHeader(statusCode)
 	w.Write(m)
 }
 
