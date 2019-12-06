@@ -21,6 +21,25 @@ const (
 	ContentTypeText = "text"
 	// ContentTypeJSON --
 	ContentTypeJSON = "json"
+
+	// MethodGET --
+	MethodGET = "GET"
+	// MethodPOST --
+	MethodPOST = "POST"
+	// MethodHEAD --
+	MethodHEAD = "HEAD"
+	// MethodPUT --
+	MethodPUT = "PUT"
+	// MethodDELETE --
+	MethodDELETE = "DELETE"
+	// MethodCONNECT --
+	MethodCONNECT = "CONNECT"
+	// MethodOPTIONS --
+	MethodOPTIONS = "OPTIONS"
+	// MethodTRACE --
+	MethodTRACE = "TRACE"
+	// MethodPATCH --
+	MethodPATCH = "PATCH"
 )
 
 var (
