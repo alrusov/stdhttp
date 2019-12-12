@@ -108,7 +108,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	processed := true
-	path := NormalizeSlashes(r.URL.Path)
+	path := misc.NormalizeSlashes(r.URL.Path)
 
 	defer func() {
 		if !processed {
@@ -122,6 +122,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if h.handler.Handler(id, path, w, r) {
+		return
+	}
+
+	if h.isEndpointDisabled(path) {
+		processed = false
+		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
 		return
 	}
 
@@ -156,6 +162,47 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
 	}
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+/*
+isEndpointDisabled -- see test
+*/
+func (h *HTTP) isEndpointDisabled(path string) bool {
+	if len(h.commonConfig.DisabledEndpoints) == 0 {
+		return false
+	}
+
+	_, exists := h.commonConfig.DisabledEndpoints["*"]
+	if exists {
+		return true
+	}
+
+	_, exists = h.commonConfig.DisabledEndpoints[path]
+	if exists {
+		return true
+	}
+
+	for {
+		i := strings.LastIndexByte(path, '/')
+		if i < 0 {
+			break
+		}
+
+		path = path[:i]
+		if path == "" {
+			break
+		}
+
+		_, exists = h.commonConfig.DisabledEndpoints[path+"/*"]
+		if exists {
+			return true
+		}
+
+	}
+
+	return false
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
