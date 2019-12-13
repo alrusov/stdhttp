@@ -136,6 +136,9 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch path {
+	case "/favicon.ico":
+		h.icon(id, path, w, r)
+
 	case "":
 		h.root(id, path, w, r)
 

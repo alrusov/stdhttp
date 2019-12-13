@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	// ContentTypeIcon --
+	ContentTypeIcon = "icon"
 	// ContentTypeText --
 	ContentTypeText = "text"
 	// ContentTypeJSON --
@@ -43,6 +45,7 @@ const (
 var (
 	// ContentTypes --
 	contentTypes = misc.StringMap{
+		ContentTypeIcon: "image/x-icon",
 		ContentTypeText: "plain/text; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
 	}

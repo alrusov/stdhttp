@@ -170,6 +170,7 @@ func (h *HTTP) initInfo() {
 	info.Endpoints = make(map[string]*endpointInfo)
 	h.AddEndpointsInfo(misc.StringMap{
 		url404:              "Invalid endpoint",
+		"/favicon.ico":      "favicon.ico",
 		"/":                 "Root page",
 		"/info":             "Get information about the application",
 		"/ping":             "Checking if the application running",
