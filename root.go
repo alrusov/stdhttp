@@ -33,7 +33,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		if level == name {
 			opn, cls = h.MenuHighlight()
 		}
-		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=1">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
+		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=/">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
 	}
 
 	profilerEnabled := h.commonConfig.ProfilerEnabled
@@ -49,7 +49,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 			opn, cls = h.MenuHighlight()
 		}
 
-		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=1">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
+		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=/">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
 	}
 
 	profilerSwitch := addProfilerItem(true) + addProfilerItem(false)

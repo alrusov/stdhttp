@@ -111,10 +111,10 @@ func Error(id uint64, answerSent bool, w http.ResponseWriter, httpCode int, mess
 
 // ReturnRefresh --
 func ReturnRefresh(w http.ResponseWriter, r *http.Request, code int) {
-	refresh := r.URL.Query().Get("refresh") != ""
-	if refresh {
-		w.Header().Set("Location", "/")
-		w.WriteHeader(http.StatusTemporaryRedirect)
+	path := r.URL.Query().Get("refresh")
+	if path != "" {
+		w.Header().Set("Location", path)
+		w.WriteHeader(http.StatusSeeOther)
 	} else {
 		w.WriteHeader(code)
 	}
