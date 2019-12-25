@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/alrusov/misc"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -15,9 +17,15 @@ func (h *HTTP) icon(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fd, err := os.Open(h.listenerCfg.IconFile)
+	fn, err := misc.AbsPath(h.listenerCfg.IconFile)
 	if err != nil {
-		Error(id, false, w, http.StatusNotFound, `favicon.ico file not found`, nil)
+		Error(id, false, w, http.StatusNotFound, `favicon.ico file not found`, err)
+		return
+	}
+
+	fd, err := os.Open(fn)
+	if err != nil {
+		Error(id, false, w, http.StatusNotFound, `favicon.ico file not found`, err)
 		return
 	}
 	defer fd.Close()
