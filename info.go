@@ -79,8 +79,8 @@ type (
 	}
 
 	urlStat struct {
+		Total   uint64   `json:"total"`
 		la      *loadavg.LoadAvg
-		Total   int64   `json:"total"`
 		LoadAvg float64 `json:"loadAvg"`
 	}
 
@@ -230,7 +230,7 @@ func (h *HTTP) updateEndpointStat(path string) {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func (s *urlStat) inc() {
-	atomic.AddInt64(&s.Total, 1)
+	atomic.AddUint64(&s.Total, 1)
 	s.la.Add(1)
 }
 

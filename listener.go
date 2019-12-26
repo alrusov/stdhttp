@@ -19,6 +19,7 @@ import (
 type (
 	// HTTP --
 	HTTP struct {
+		connectionID      uint64
 		listenerCfg       *config.Listener
 		commonConfig      *config.Common
 		mutex             *sync.Mutex
@@ -26,7 +27,6 @@ type (
 		handler           Handler
 		extraFunc         ExtraInfoFunc
 		info              *infoBlock
-		connectionID      uint64
 		extraRootItemFunc ExtraRootItemFunc
 	}
 
