@@ -121,6 +121,13 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		misc.LogProcessingTime("", id, "http", "", t0)
 	}()
 
+	if h.listenerCfg.BasicAuthEnabled {
+		if !h.basicAuthHandler(id, path, w, r) {
+			processed = true
+			return
+		}
+	}
+
 	if h.handler.Handler(id, path, w, r) {
 		return
 	}
