@@ -12,6 +12,7 @@ import (
 func (h *HTTP) basicAuthHandler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
 	u, p, ok := r.BasicAuth()
 	if !ok {
+		log.Message(log.DEBUG, `[%d] No authentication information in request`, id)
 	} else if err := h.checkLogin(u, p); err != nil {
 		log.Message(log.INFO, `[%d] Login error: %s`, id, err.Error())
 	} else {
