@@ -22,6 +22,8 @@ import (
 const (
 	RequestOptionGzip                = ".gzip"
 	RequestOptionSkipTLSVerification = ".skip-tls-verification"
+	RequestOptionBasicAuthUser       = ".user"
+	RequestOptionBasicAuthPassword   = ".password"
 )
 
 func parseBoolOption(opt string) bool {
@@ -44,6 +46,8 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 
 	withGzip := false
 	skipTLSverification := false
+	user := ""
+	password := ""
 
 	if opts != nil {
 		for k, v := range opts {
@@ -53,6 +57,10 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 					withGzip = parseBoolOption(v)
 				case RequestOptionSkipTLSVerification:
 					skipTLSverification = parseBoolOption(v)
+				case RequestOptionBasicAuthUser:
+					user = v
+				case RequestOptionBasicAuthPassword:
+					password = v
 				}
 				continue
 			}
@@ -78,6 +86,10 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 	req, err := http.NewRequest(method, uri, bytes.NewReader(preparedData))
 	if err != nil {
 		return nil, err
+	}
+
+	if user != "" || password != "" {
+		req.SetBasicAuth(user, password)
 	}
 
 	if withGzip {
