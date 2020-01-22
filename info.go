@@ -172,7 +172,7 @@ func (h *HTTP) initInfo() {
 		url404:              `Cumulatiive "Not Found" endpoint`,
 		"/favicon.ico":      "favicon.ico",
 		"/":                 "Root page",
-		"/info":             "Get app information ",
+		"/info":             "Get app information",
 		"/ping":             "Checking if the application is running",
 		"/set-log-level":    "Temporarily change log level",
 		"/profiler-enable":  "Enable profiler",
