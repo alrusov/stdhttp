@@ -169,15 +169,15 @@ func (h *HTTP) initInfo() {
 
 	info.Endpoints = make(map[string]*endpointInfo)
 	h.AddEndpointsInfo(misc.StringMap{
-		url404:              "Invalid endpoint",
+		url404:              `Cumulatiive "Not Found" endpoint`,
 		"/favicon.ico":      "favicon.ico",
 		"/":                 "Root page",
-		"/info":             "Get information about the application",
-		"/ping":             "Checking if the application running",
-		"/set-log-level":    "Temporary log level change",
+		"/info":             "Get app information ",
+		"/ping":             "Checking if the application is running",
+		"/set-log-level":    "Temporarily change log level",
 		"/profiler-enable":  "Enable profiler",
 		"/profiler-disable": "Disable profiler",
-		"/debug/pprof":      "Profiler",
+		"/debug/pprof":      "Profiler root",
 	})
 }
 
