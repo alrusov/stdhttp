@@ -44,7 +44,7 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 		data = make([]byte, 0)
 	}
 
-	withGzip := false
+	withGzip := gzipRecomended(data)
 	skipTLSverification := false
 	user := ""
 	password := ""

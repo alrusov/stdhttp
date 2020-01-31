@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync/atomic"
 
 	"github.com/alrusov/bufpool"
 	"github.com/alrusov/log"
@@ -167,8 +168,8 @@ func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err erro
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // WriteReply --
-func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, data []byte, minSizeForGzip int) (err error) {
-	if minSizeForGzip >= 0 && len(data) >= minSizeForGzip {
+func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, data []byte) (err error) {
+	if gzipRecomended(data) {
 		var gzbuf bytes.Buffer
 		gz := gzip.NewWriter(&gzbuf)
 
@@ -209,6 +210,29 @@ func CloneURLvalues(src url.Values) (dst url.Values) {
 	}
 
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+var minSizeForGzip = int32(0)
+
+// SetMinSizeForGzip --
+func SetMinSizeForGzip(size int) {
+	atomic.StoreInt32(&minSizeForGzip, int32(size))
+}
+
+func gzipRecomended(data []byte) bool {
+	if data == nil {
+		return false
+	}
+
+	ln := len(data)
+	if ln == 0 {
+		return false
+	}
+
+	minSize := int(atomic.LoadInt32(&minSizeForGzip))
+	return minSize >= 0 && ln >= minSize
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
