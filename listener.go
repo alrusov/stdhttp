@@ -100,7 +100,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer panic.SaveStackToLog()
 
 	id := atomic.AddUint64(&h.connectionID, 1)
-	log.Message(log.DEBUG, `[%d] New request %q from %q`, id, r.RequestURI, r.RemoteAddr)
+	log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New request %q from %q`, id, r.RequestURI, r.RemoteAddr)
 
 	if !misc.AppStarted() {
 		Error(id, false, w, http.StatusInternalServerError, "Server stopped", nil)
@@ -213,6 +213,20 @@ func (h *HTTP) isEndpointDisabled(path string) bool {
 	}
 
 	return false
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+var logReplaceRequest = &log.Replace{}
+
+// SetLogFilterForRequest --
+func SetLogFilterForRequest(f *log.Replace) {
+	logReplaceRequest = f
+}
+
+// AddLogFilterForRequest --
+func AddLogFilterForRequest(exp string, replace string) error {
+	return logReplaceRequest.Add(exp, replace)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
