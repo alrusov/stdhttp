@@ -173,6 +173,7 @@ func (h *HTTP) initInfo() {
 		"/favicon.ico":      "favicon.ico",
 		"/":                 "Root page",
 		"/info":             "Get app information",
+		"/config":           "Get app config (secured)",
 		"/ping":             "Checking if the application is running",
 		"/set-log-level":    "Temporarily change log level",
 		"/profiler-enable":  "Enable profiler",

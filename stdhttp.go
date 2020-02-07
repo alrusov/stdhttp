@@ -47,7 +47,7 @@ var (
 	// ContentTypes --
 	contentTypes = misc.StringMap{
 		ContentTypeIcon: "image/x-icon",
-		ContentTypeText: "plain/text; charset=utf-8",
+		ContentTypeText: "text/plain; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
 	}
 )
@@ -68,7 +68,7 @@ func ContentHeader(contentType string) (string, error) {
 func WriteContentHeader(w http.ResponseWriter, contentType string) error {
 	h, err := ContentHeader(contentType)
 	if err != nil {
-		return err
+		h = contentType
 	}
 
 	w.Header().Set("Content-Type", h)
@@ -84,7 +84,7 @@ func SendJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 		m = []byte(err.Error())
 	}
 
-	WriteContentHeader(w, "json")
+	WriteContentHeader(w, ContentTypeJSON)
 	w.WriteHeader(statusCode)
 	w.Write(m)
 }

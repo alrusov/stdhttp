@@ -43,7 +43,7 @@ func (h *HTTP) icon(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	WriteContentHeader(w, "icon")
+	WriteContentHeader(w, ContentTypeIcon)
 	w.WriteHeader(http.StatusOK)
 	w.Write(icon)
 }

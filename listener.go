@@ -143,14 +143,17 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch path {
-	case "/favicon.ico":
-		h.icon(id, path, w, r)
-
 	case "":
 		h.root(id, path, w, r)
 
+	case "/favicon.ico":
+		h.icon(id, path, w, r)
+
 	case "/info":
 		h.showInfo(id, path, w, r)
+
+	case "/config":
+		h.showConfig(id, path, w, r)
 
 	case "/ping":
 		w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s", misc.AppName(), misc.AppVersion()))
@@ -217,10 +220,10 @@ func (h *HTTP) isEndpointDisabled(path string) bool {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-var logReplaceRequest = &log.Replace{}
+var logReplaceRequest = &misc.Replace{}
 
 // SetLogFilterForRequest --
-func SetLogFilterForRequest(f *log.Replace) {
+func SetLogFilterForRequest(f *misc.Replace) {
 	logReplaceRequest = f
 }
 
