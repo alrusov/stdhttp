@@ -65,7 +65,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 	}
 
 	s := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
   <head>
     <title>%s</title>
   </head>

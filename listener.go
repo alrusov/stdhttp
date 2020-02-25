@@ -100,7 +100,16 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer panic.SaveStackToLog()
 
 	id := atomic.AddUint64(&h.connectionID, 1)
-	log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New request %q from %q`, id, r.RequestURI, r.RemoteAddr)
+
+	realIP := r.Header.Get("X-Real-IP")
+	if realIP == "" {
+		realIP = r.Header.Get("X-Forwarded-For")
+		if realIP == "" {
+			realIP = r.RemoteAddr
+		}
+	}
+
+	log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New request %q from %s`, id, r.RequestURI, realIP)
 
 	if !misc.AppStarted() {
 		Error(id, false, w, http.StatusInternalServerError, "Server stopped", nil)
