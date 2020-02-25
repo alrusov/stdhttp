@@ -16,12 +16,14 @@ import (
 )
 
 const (
-	// ContentTypeIcon --
-	ContentTypeIcon = "icon"
+	// ContentTypeHTML--
+	ContentTypeHTML = "html"
 	// ContentTypeText --
 	ContentTypeText = "text"
 	// ContentTypeJSON --
 	ContentTypeJSON = "json"
+	// ContentTypeIcon --
+	ContentTypeIcon = "icon"
 
 	// MethodGET --
 	MethodGET = "GET"
