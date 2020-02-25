@@ -46,9 +46,10 @@ const (
 var (
 	// ContentTypes --
 	contentTypes = misc.StringMap{
-		ContentTypeIcon: "image/x-icon",
+		ContentTypeHTML: "text/html; charset=utf-8",
 		ContentTypeText: "text/plain; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
+		ContentTypeIcon: "image/x-icon",
 	}
 )
 
