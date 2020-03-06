@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// ContentTypeHTML--
+	// ContentTypeHTML --
 	ContentTypeHTML = "html"
 	// ContentTypeText --
 	ContentTypeText = "text"

@@ -36,8 +36,14 @@ func parseBoolOption(opt string) bool {
 }
 
 // Request --
-// Don't forget call bufpool.PutBuf(returned_buf)
 func Request(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, error) {
+	buf, _, err := RequestEx(method, uri, timeout, opts, data)
+	return buf, err
+}
+
+// RequestEx --
+// Don't forget call bufpool.PutBuf(returned_buf)
+func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, http.Header, error) {
 	params := url.Values{}
 
 	if data == nil {
@@ -75,17 +81,17 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 		gz := gzip.NewWriter(buf)
 
 		if _, err := gz.Write(data); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err := gz.Close(); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		preparedData = buf.Bytes()
 	}
 
 	req, err := http.NewRequest(method, uri, bytes.NewReader(preparedData))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if user != "" || password != "" {
@@ -121,19 +127,19 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	bodyBuf, _, err := ReadData(resp.Header, resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if resp.StatusCode/100 != 2 {
-		return bodyBuf, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
+		return bodyBuf, resp.Header, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
 	}
 
-	return bodyBuf, nil
+	return bodyBuf, resp.Header, nil
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
