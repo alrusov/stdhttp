@@ -170,15 +170,15 @@ func (h *HTTP) initInfo() {
 	info.Endpoints = make(map[string]*endpointInfo)
 	h.AddEndpointsInfo(misc.StringMap{
 		url404:              `Cumulatiive "Not Found" endpoint`,
-		"/favicon.ico":      "favicon.ico",
-		"/":                 "Root page",
-		"/info":             "Get app information",
-		"/config":           "Get app config (secured)",
-		"/ping":             "Checking if the application is running",
-		"/set-log-level":    "Temporarily change log level, ?level=<level>",
-		"/profiler-enable":  "Enable profiler",
-		"/profiler-disable": "Disable profiler",
-		"/debug/pprof":      "Profiler root",
+		"/favicon.ico":      "favicon.ico. Parametrs: -",
+		"/":                 "Root page. Parametrs: -",
+		"/info":             "Get app information. Parametrs: -",
+		"/config":           "Get app config (secured). Parametrs: -",
+		"/ping":             "Checking if the application is running. Parametrs: -",
+		"/set-log-level":    "Temporarily change log level. Parametrs: [level=<level>]",
+		"/profiler-enable":  "Enable profiler. Parametrs: -",
+		"/profiler-disable": "Disable profiler. Parametrs: -",
+		"/debug/pprof":      "Profiler root. Parametrs: -",
 	})
 }
 
