@@ -175,7 +175,7 @@ func (h *HTTP) initInfo() {
 		"/info":             "Get app information",
 		"/config":           "Get app config (secured)",
 		"/ping":             "Checking if the application is running",
-		"/set-log-level":    "Temporarily change log level",
+		"/set-log-level":    "Temporarily change log level, ?level=<level>",
 		"/profiler-enable":  "Enable profiler",
 		"/profiler-disable": "Disable profiler",
 		"/debug/pprof":      "Profiler root",
