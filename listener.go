@@ -158,6 +158,9 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/favicon.ico":
 		h.icon(id, path, w, r)
 
+	case "/exit":
+		h.exit(id, path, w, r)
+
 	case "/info":
 		h.showInfo(id, path, w, r)
 

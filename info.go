@@ -79,7 +79,7 @@ type (
 	}
 
 	urlStat struct {
-		Total   uint64   `json:"total"`
+		Total   uint64 `json:"total"`
 		la      *loadavg.LoadAvg
 		LoadAvg float64 `json:"loadAvg"`
 	}
@@ -170,15 +170,16 @@ func (h *HTTP) initInfo() {
 	info.Endpoints = make(map[string]*endpointInfo)
 	h.AddEndpointsInfo(misc.StringMap{
 		url404:              `Cumulatiive "Not Found" endpoint`,
-		"/favicon.ico":      "favicon.ico. Parameters: -",
 		"/":                 "Root page. Parameters: -",
-		"/info":             "Get app information. Parameters: -",
 		"/config":           "Get app config (secured). Parameters: -",
-		"/ping":             "Checking if the application is running. Parameters: -",
-		"/set-log-level":    "Temporarily change log level. Parameters: [level=<level>]",
-		"/profiler-enable":  "Enable profiler. Parameters: -",
-		"/profiler-disable": "Disable profiler. Parameters: -",
 		"/debug/pprof":      "Profiler root. Parameters: -",
+		"/exit":             "Exit application: pid=<pid>, [code=<code>]",
+		"/favicon.ico":      "favicon.ico. Parameters: -",
+		"/info":             "Get app information. Parameters: -",
+		"/ping":             "Checking if the application is running. Parameters: -",
+		"/profiler-disable": "Disable profiler. Parameters: -",
+		"/profiler-enable":  "Enable profiler. Parameters: -",
+		"/set-log-level":    "Temporarily change log level. Parameters: level=<level>",
 	})
 }
 
