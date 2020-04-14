@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/alrusov/misc"
+	"github.com/alrusov/panic"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -30,7 +32,12 @@ func (h *HTTP) exit(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	misc.StopApp(int(code))
+	go func() {
+		defer panic.SaveStackToLog()
+		misc.Sleep(1000 * time.Millisecond)
+		misc.StopApp(int(code))
+	}()
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
