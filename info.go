@@ -65,7 +65,10 @@ type (
 		ProfilerEnabled bool      `json:"profilerEnabled"`
 		AllocSys        uint64    `json:"allocSys"`
 		HeapSys         uint64    `json:"heapSys"`
+		HeapInuse       uint64    `json:"HeapInuse"`
+		HeapObjects     uint64    `json:"HeapObjects"`
 		StackSys        uint64    `json:"stackSys"`
+		StackInuse      uint64    `json:"StackInuse"`
 		NumCPU          int       `json:"numCPU"`
 		GoMaxProcs      int       `json:"goMaxProcs"`
 		NumGoroutine    int       `json:"numGoroutine"`
@@ -268,6 +271,7 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	sort.Strings(ip)
 
 	var mem runtime.MemStats
+	runtime.GC()
 	runtime.ReadMemStats(&mem)
 
 	info.Runtime.Now = misc.NowUTC()
@@ -278,7 +282,10 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	info.Runtime.ProfilerEnabled = h.commonConfig.ProfilerEnabled
 	info.Runtime.AllocSys = mem.Sys
 	info.Runtime.HeapSys = mem.HeapSys
+	info.Runtime.HeapInuse = mem.HeapInuse
+	info.Runtime.HeapObjects = mem.HeapObjects
 	info.Runtime.StackSys = mem.StackSys
+	info.Runtime.StackInuse = mem.StackInuse
 	info.Runtime.NumGoroutine = runtime.NumGoroutine()
 	info.Runtime.Requests.update()
 

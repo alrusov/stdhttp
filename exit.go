@@ -38,7 +38,19 @@ func (h *HTTP) exit(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		misc.StopApp(int(code))
 	}()
 
-	w.WriteHeader(http.StatusNoContent)
+	type bye struct {
+		PID  int64  `json:"pid"`
+		Code int64  `json:"code"`
+		Text string `json:"text"`
+	}
+
+	SendJSON(w, http.StatusOK,
+		&bye{
+			PID:  pid,
+			Code: code,
+			Text: "bye",
+		},
+	)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
