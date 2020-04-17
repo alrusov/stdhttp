@@ -66,20 +66,22 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 
 	s := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>%s</title>
-  </head>
-  <body>
-      <h4>%s %s</h4>
-      <ul>
-        <li><a href="/info" target="info">Application info in the JSON format</a></li>
-		<li>Change logging level:%s</li>
-		<li>Profiler is %s</li>
-		%s
-		%s
-      </ul>
-  </body>
-</html>`,
+	<head>
+		<title>%s</title>
+	</head>
+	<body>
+		<h4>%s %s</h4>
+		<ul>
+			<li><a href="/info" target="info">Application info in the JSON format</a></li>
+			<li><a href="/config" target="config">Prepared config</a></li>
+			<li>Change logging level:%s</li>
+			<li>Profiler is %s</li>
+			%s
+			%s
+		</ul>
+	</body>
+</html>
+`,
 		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, profilerSwitch, profiler, extra)
 
 	WriteContentHeader(w, ContentTypeHTML)
