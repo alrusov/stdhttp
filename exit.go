@@ -22,7 +22,7 @@ func (h *HTTP) exit(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	code := int64(0)
+	code := int64(misc.ExStopped)
 	s := queryParams.Get("code")
 	if s != "" {
 		code, err = strconv.ParseInt(s, 10, 16)
