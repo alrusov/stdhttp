@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/alrusov/config"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
@@ -64,13 +65,15 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		extra = "<li>" + strings.Join(h.extraRootItemFunc(), "</li><li>")
 	}
 
+	cfg := config.GetCommon()
+
 	s := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title>%s</title>
 	</head>
 	<body>
-		<h4>%s %s</h4>
+		<h4>%s [<em>%s %s</em>]</h4>
 		<ul>
 			<li><a href="/info" target="info">Application info in the JSON format</a></li>
 			<li><a href="/config" target="config">Prepared config</a></li>
@@ -82,7 +85,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 	</body>
 </html>
 `,
-		misc.AppName(), misc.AppName(), misc.AppVersion(), levels, profilerSwitch, profiler, extra)
+		cfg.Name, cfg.Name, misc.AppName(), misc.AppVersion(), levels, profilerSwitch, profiler, extra)
 
 	WriteContentHeader(w, ContentTypeHTML)
 	w.WriteHeader(http.StatusOK)
