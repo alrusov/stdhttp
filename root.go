@@ -73,7 +73,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		<title>%s</title>
 	</head>
 	<body>
-		<h4>%s [<em>%s %s</em>]</h4>
+		<h4>%s [<em>%s %s%s</em>]</h4>
 		<ul>
 			<li><a href="/info" target="info">Application info in the JSON format</a></li>
 			<li><a href="/config" target="config">Prepared config</a></li>
@@ -85,7 +85,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 	</body>
 </html>
 `,
-		cfg.Name, cfg.Name, misc.AppName(), misc.AppVersion(), levels, profilerSwitch, profiler, extra)
+		cfg.Name, cfg.Name, misc.AppName(), misc.AppVersion(), misc.AppTags(true), levels, profilerSwitch, profiler, extra)
 
 	WriteContentHeader(w, ContentTypeHTML)
 	w.WriteHeader(http.StatusOK)

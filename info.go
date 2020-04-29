@@ -35,6 +35,7 @@ type (
 		Name        string    `json:"name"`
 		Description string    `json:"description"`
 		Version     string    `json:"version"`
+		Tags        string    `json:"tags"`
 		BiildTime   time.Time `json:"biildTime"`
 		GoVersion   string    `json:"goVersion"`
 		OS          string    `json:"os"`
@@ -111,6 +112,7 @@ func (h *HTTP) initInfo() {
 	info.Application = &applicationBlock{
 		AppName:   misc.AppName(),
 		Version:   misc.AppVersion(),
+		Tags:      misc.AppTags(false),
 		BiildTime: misc.BuildTimeTS(),
 		Copyright: misc.Copyright(),
 		GoVersion: runtime.Version(),
