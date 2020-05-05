@@ -18,6 +18,8 @@ import (
 const (
 	// ContentTypeHTML --
 	ContentTypeHTML = "html"
+	// ContentTypeCSS --
+	ContentTypeCSS = "css"
 	// ContentTypeText --
 	ContentTypeText = "text"
 	// ContentTypeJSON --
@@ -49,6 +51,7 @@ var (
 	// ContentTypes --
 	contentTypes = misc.StringMap{
 		ContentTypeHTML: "text/html; charset=utf-8",
+		ContentTypeCSS:  "text/css; charset=utf-8",
 		ContentTypeText: "text/plain; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
 		ContentTypeIcon: "image/x-icon",

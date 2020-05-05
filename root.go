@@ -85,7 +85,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 	</body>
 </html>
 `,
-		cfg.Name, cfg.Name, misc.AppName(), misc.AppVersion(), misc.AppTags(true), levels, profilerSwitch, profiler, extra)
+		cfg.Name, cfg.Name, misc.AppName(), misc.AppVersion(), misc.AppTags(false), levels, profilerSwitch, profiler, extra)
 
 	WriteContentHeader(w, ContentTypeHTML)
 	w.WriteHeader(http.StatusOK)
