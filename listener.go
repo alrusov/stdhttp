@@ -130,25 +130,15 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		misc.LogProcessingTime("", id, "http", "", t0)
 	}()
 
+	if h.isEndpointDisabled(path) {
+		Error(id, false, w, http.StatusLocked, `Endpoint "`+path+`" is disabled`, nil)
+		return
+	}
+
 	if h.listenerCfg.BasicAuthEnabled {
 		if !h.basicAuthHandler(id, path, w, r) {
-			processed = true
 			return
 		}
-	}
-
-	if h.handler.Handler(id, path, w, r) {
-		return
-	}
-
-	if h.isEndpointDisabled(path) {
-		processed = false
-		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
-		return
-	}
-
-	if h.profiler(id, path, w, r) {
-		return
 	}
 
 	switch path {
@@ -183,6 +173,14 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ReturnRefresh(w, r, http.StatusNoContent)
 
 	default:
+		if h.profiler(id, path, w, r) {
+			return
+		}
+
+		if h.handler.Handler(id, path, w, r) {
+			return
+		}
+
 		processed = false
 		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
 	}

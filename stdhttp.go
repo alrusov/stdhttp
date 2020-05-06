@@ -25,7 +25,7 @@ const (
 	// ContentTypeJSON --
 	ContentTypeJSON = "json"
 	// ContentTypeIcon --
-	ContentTypeIcon = "icon"
+	ContentTypeIcon = "ico"
 
 	// MethodGET --
 	MethodGET = "GET"
