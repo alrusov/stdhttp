@@ -1,11 +1,11 @@
 package stdhttp
 
 import (
-	"fmt"
-	"html"
+	"html/template"
+	"io"
 	"net/http"
-	"net/url"
-	"strings"
+
+	"github.com/alrusov/bufpool"
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
@@ -20,51 +20,13 @@ func (h *HTTP) SetRootItemsFunc(f ExtraRootItemFunc) {
 }
 
 // MenuHighlight --
-func (h *HTTP) MenuHighlight() (string, string) {
+func (h *HTTP) MenuHighlight() (open template.HTML, close template.HTML) {
 	return `<span style="color: red; font-weight: bold;">`, `</span>`
 }
 
+//----------------------------------------------------------------------------------------------------------------------------//
+
 func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Request) {
-	levels := ""
-
-	_, _, level := log.GetCurrentLogLevel()
-
-	for _, name := range log.GetLogLevels() {
-		opn, cls := "", ""
-		if level == name {
-			opn, cls = h.MenuHighlight()
-		}
-		levels += fmt.Sprintf(`&nbsp;<a href="/set-log-level?level=%s&amp;refresh=/">%s%s%s</a>`, url.QueryEscape(name), opn, html.EscapeString(name), cls)
-	}
-
-	profilerEnabled := h.commonConfig.ProfilerEnabled
-
-	addProfilerItem := func(v bool) string {
-		op := "enable"
-		if !v {
-			op = "disable"
-		}
-
-		opn, cls := "", ""
-		if v == profilerEnabled {
-			opn, cls = h.MenuHighlight()
-		}
-
-		return fmt.Sprintf(`&nbsp;<a href="/profiler-%s?refresh=/">%s%sD%s</a>`, url.QueryEscape(op), opn, html.EscapeString(strings.ToUpper(op)), cls)
-	}
-
-	profilerSwitch := addProfilerItem(true) + addProfilerItem(false)
-
-	profiler := ""
-	if profilerEnabled {
-		profiler = `<li><a href="debug/pprof/" target="pprof">Show profiler</a></li>`
-	}
-
-	extra := ""
-	if h.extraRootItemFunc != nil {
-		extra = "<li>" + strings.Join(h.extraRootItemFunc(), "</li><li>")
-	}
-
 	cfg := config.GetCommon()
 
 	tags := misc.AppTags()
@@ -72,29 +34,99 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		tags = " " + tags
 	}
 
-	s := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<title>%s</title>
-	</head>
-	<body>
-		<h4>%s <em>[%s %s%s]</em></h4>
-		<ul>
-			<li><a href="/info" target="info">Application info in the JSON format</a></li>
-			<li><a href="/config" target="config">Prepared config</a></li>
-			<li>Change logging level:%s</li>
-			<li>Profiler is %s</li>
-			%s
-			%s
-		</ul>
-	</body>
-</html>
-`,
-		cfg.Name, cfg.Name, misc.AppName(), misc.AppVersion(), tags, levels, profilerSwitch, profiler, extra)
+	page := `` +
+		`<!DOCTYPE html>` +
+		`<html lang="en">` +
+		/*	*/ `<head>` +
+		/*		*/ `<title>{{.Name}}</title>` +
+		/*	*/ `</head>` +
+		/*	*/ `<body>` +
+		/*		*/ `<h4>{{.Name}} <em>[{{.AppName}} {{.AppVersion}}{{.AppTags}}]</em></h4>` +
+		/*		*/ `<ul>` +
+		/*			*/ `<li><a href="/info" target="info">Application info in the JSON format</a></li>` +
+		/*			*/ `<li><a href="/config" target="config">Prepared config</a></li>` +
+		/*			*/ `<li>Change logging level:` +
+		/*				*/ `{{range $_, $Level := .LogLevels}}` +
+		/*					*/ `&nbsp;<a href="/set-log-level?level={{$Level}}&amp;refresh=/">` +
+		/*						*/ `{{if eq $Level $.CurrentLogLevel}}{{$.LightOpen}}{{end}}` +
+		/*						*/ `{{$Level}}` +
+		/*						*/ `{{if eq $Level $.CurrentLogLevel}}{{$.LightClose}}{{end}}` +
+		/*					*/ `</a>` +
+		/*				*/ `{{end}}` +
+		/*			*/ `</li>` +
+		/*			*/ `<li>Profiler is ` +
+		/*				*/ `&nbsp;<a href="/profiler-enable?refresh=/">` +
+		/*					*/ `{{if .ProfilerEnabled}}{{$.LightOpen}}{{end}}` +
+		/*					*/ `ENABLED` +
+		/*					*/ `{{if .ProfilerEnabled}}{{$.LightClose}}{{end}}` +
+		/*				*/ `</a>` +
+		/*				*/ `&nbsp;<a href="/profiler-disable?refresh=/">` +
+		/*					*/ `{{if not .ProfilerEnabled}}{{$.LightOpen}}{{end}}` +
+		/*					*/ `DISABLED` +
+		/*					*/ `{{if not .ProfilerEnabled}}{{$.LightClose}}{{end}}` +
+		/*				*/ `</a>` +
+		/*			*/ `</li>` +
+		/*			*/ `{{if .ProfilerEnabled}}` +
+		/*				*/ `<li><a href="debug/pprof/" target="pprof">Show profiler</a></li>` +
+		/*			*/ `{{end}}` +
+		/*			*/ `{{range .Extra}}` +
+		/*				*/ `<li>{{.}}</li>` +
+		/*			*/ `{{end}}` +
+		/*		*/ `</ul>` +
+		/*	*/ `</body>` +
+		`</html>`
+
+	params := struct {
+		Name            string
+		AppName         string
+		AppVersion      string
+		AppTags         string
+		CurrentLogLevel string
+		LogLevels       []string
+		ProfilerEnabled bool
+		Extra           []template.HTML
+		LightOpen       template.HTML
+		LightClose      template.HTML
+	}{
+		Name:            cfg.Name,
+		AppName:         misc.AppName(),
+		AppVersion:      misc.AppVersion(),
+		AppTags:         misc.AppTags(),
+		LogLevels:       log.GetLogLevels(),
+		ProfilerEnabled: h.commonConfig.ProfilerEnabled,
+	}
+
+	_, _, params.CurrentLogLevel = log.GetCurrentLogLevel()
+	params.LightOpen, params.LightClose = h.MenuHighlight()
+
+	if h.extraRootItemFunc != nil {
+		for _, h := range h.extraRootItemFunc() {
+			params.Extra = append(params.Extra, template.HTML(h))
+		}
+	}
+
+	status := http.StatusOK
+
+	buf := bufpool.GetBuf()
+	defer bufpool.PutBuf(buf)
+
+	t, err := template.New("root").Parse(page)
+	if err != nil {
+		status = http.StatusInternalServerError
+		buf.WriteString(err.Error())
+		log.Message(log.ERR, `[%d] %s`, id, err.Error())
+	} else {
+		err = t.Execute(buf, params)
+		if err != nil {
+			status = http.StatusInternalServerError
+			buf.WriteString(err.Error())
+			log.Message(log.ERR, `[%d] %s`, id, err.Error())
+		}
+	}
 
 	WriteContentHeader(w, ContentTypeHTML)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(s))
+	w.WriteHeader(status)
+	io.Copy(w, buf)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
