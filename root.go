@@ -41,7 +41,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		/*		*/ `<title>{{.Name}}</title>` +
 		/*	*/ `</head>` +
 		/*	*/ `<body>` +
-		/*		*/ `<h4>{{.Name}} <em>[{{.AppName}} {{.AppVersion}}{{.AppTags}}]</em></h4>` +
+		/*		*/ `<h4>{{.Name}} <em>[{{.AppName}} {{.AppVersion}}{{if .AppTags}}&nbsp;{{.AppTags}}{{end}}]</em></h4>` +
 		/*		*/ `<ul>` +
 		/*			*/ `<li><a href="/info" target="info">Application info in the JSON format</a></li>` +
 		/*			*/ `<li><a href="/config" target="config">Prepared config</a></li>` +
