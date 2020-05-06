@@ -158,7 +158,11 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.showConfig(id, path, w, r)
 
 	case "/ping":
-		w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), misc.AppTags(false)))
+		tags := misc.AppTags()
+		if tags != "" {
+			tags = " " + tags
+		}
+		w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), tags))
 		w.WriteHeader(http.StatusNoContent)
 
 	case "/set-log-level":
@@ -178,6 +182,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if h.handler.Handler(id, path, w, r) {
+			return
+		}
+
+		if h.File(id, path, w, r) {
 			return
 		}
 

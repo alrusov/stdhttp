@@ -112,7 +112,7 @@ func (h *HTTP) initInfo() {
 	info.Application = &applicationBlock{
 		AppName:   misc.AppName(),
 		Version:   misc.AppVersion(),
-		Tags:      misc.AppTags(false),
+		Tags:      misc.AppTags(),
 		BiildTime: misc.BuildTimeTS(),
 		Copyright: misc.Copyright(),
 		GoVersion: runtime.Version(),
