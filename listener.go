@@ -28,6 +28,8 @@ type (
 		extraFunc         ExtraInfoFunc
 		info              *infoBlock
 		extraRootItemFunc ExtraRootItemFunc
+		movedPathsFwd     misc.StringMap
+		movedPathsRev     misc.StringMap
 	}
 
 	// Handler --
@@ -44,13 +46,15 @@ type (
 // NewListener --
 func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	h := &HTTP{
-		listenerCfg:  listenerCfg,
-		commonConfig: config.GetCommon(),
-		mutex:        new(sync.Mutex),
-		handler:      handler,
-		extraFunc:    ExtraInfoFunc(nil),
-		info:         &infoBlock{},
-		connectionID: 0,
+		listenerCfg:   listenerCfg,
+		commonConfig:  config.GetCommon(),
+		mutex:         new(sync.Mutex),
+		handler:       handler,
+		extraFunc:     ExtraInfoFunc(nil),
+		info:          &infoBlock{},
+		connectionID:  0,
+		movedPathsFwd: make(misc.StringMap),
+		movedPathsRev: make(misc.StringMap),
 	}
 
 	timeout := time.Duration(listenerCfg.Timeout) * time.Second
@@ -117,16 +121,20 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	processed := true
+
 	path := misc.NormalizeSlashes(r.URL.Path)
+	if path == "" {
+		path = "/"
+	}
+
+	srcPath := path
 
 	defer func() {
 		if !processed {
 			path = url404
-		} else if path == "" {
-			path = "/"
 		}
 		h.info.Runtime.Requests.inc()
-		h.updateEndpointStat(path)
+		h.updateEndpointStat(srcPath)
 		misc.LogProcessingTime("", id, "http", "", t0)
 	}()
 
@@ -141,57 +149,71 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	switch path {
-	case "":
-		h.root(id, path, w, r)
+	path, _ = h.OldPath(srcPath)
+	_, moved := h.NewPath(srcPath)
 
-	case "/favicon.ico":
-		h.icon(id, path, w, r)
+	if !moved {
+		switch path {
+		case "/":
+			h.root(id, path, w, r)
+			return
 
-	case "/exit":
-		h.exit(id, path, w, r)
+		case "/favicon.ico":
+			h.icon(id, path, w, r)
+			return
 
-	case "/info":
-		h.showInfo(id, path, w, r)
+		case "/exit":
+			h.exit(id, path, w, r)
+			return
 
-	case "/config":
-		h.showConfig(id, path, w, r)
+		case "/info":
+			h.showInfo(id, path, w, r)
+			return
 
-	case "/ping":
-		tags := misc.AppTags()
-		if tags != "" {
-			tags = " " + tags
+		case "/config":
+			h.showConfig(id, path, w, r)
+			return
+
+		case "/ping":
+			tags := misc.AppTags()
+			if tags != "" {
+				tags = " " + tags
+			}
+			w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), tags))
+			w.WriteHeader(http.StatusNoContent)
+			return
+
+		case "/set-log-level":
+			h.changeLogLevel(id, path, w, r)
+			return
+
+		case "/profiler-enable":
+			h.commonConfig.ProfilerEnabled = true
+			ReturnRefresh(w, r, http.StatusNoContent)
+			return
+
+		case "/profiler-disable":
+			h.commonConfig.ProfilerEnabled = false
+			ReturnRefresh(w, r, http.StatusNoContent)
+			return
 		}
-		w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), tags))
-		w.WriteHeader(http.StatusNoContent)
 
-	case "/set-log-level":
-		h.changeLogLevel(id, path, w, r)
-
-	case "/profiler-enable":
-		h.commonConfig.ProfilerEnabled = true
-		ReturnRefresh(w, r, http.StatusNoContent)
-
-	case "/profiler-disable":
-		h.commonConfig.ProfilerEnabled = false
-		ReturnRefresh(w, r, http.StatusNoContent)
-
-	default:
 		if h.profiler(id, path, w, r) {
 			return
 		}
-
-		if h.handler.Handler(id, path, w, r) {
-			return
-		}
-
-		if h.File(id, path, w, r) {
-			return
-		}
-
-		processed = false
-		Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
 	}
+
+	if h.handler.Handler(id, path, w, r) {
+		return
+	}
+
+	if h.File(id, path, w, r) {
+		return
+	}
+
+	processed = false
+	Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
+
 	return
 }
 
@@ -248,6 +270,56 @@ func SetLogFilterForRequest(f *misc.Replace) {
 // AddLogFilterForRequest --
 func AddLogFilterForRequest(exp string, replace string) error {
 	return logReplaceRequest.Add(exp, replace)
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// MovePath --
+func (h *HTTP) MovePath(path string, newPath string) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	if path == "" {
+		return
+	}
+
+	if path == newPath || newPath == "" {
+		delete(h.movedPathsFwd, path)
+		delete(h.movedPathsRev, path)
+	} else {
+		h.movedPathsFwd[path] = newPath
+		h.movedPathsRev[newPath] = path
+	}
+
+	info, exists := h.info.Endpoints[path]
+	if exists {
+		h.info.Endpoints[newPath] = info
+		delete(h.info.Endpoints, path)
+	}
+}
+
+// NewPath --
+func (h *HTTP) NewPath(path string) (newPath string, exists bool) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	newPath, exists = h.movedPathsFwd[path]
+	if !exists {
+		newPath = path
+	}
+	return
+}
+
+// OldPath --
+func (h *HTTP) OldPath(newPath string) (path string, exists bool) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	path, exists = h.movedPathsRev[newPath]
+	if !exists {
+		path = newPath
+	}
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

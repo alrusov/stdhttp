@@ -47,7 +47,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		/*			*/ `<li><a href="/config" target="config">Prepared config</a></li>` +
 		/*			*/ `<li>Change logging level:` +
 		/*				*/ `{{range $_, $Level := .LogLevels}}` +
-		/*					*/ `&nbsp;<a href="/set-log-level?level={{$Level}}&amp;refresh=/">` +
+		/*					*/ `&nbsp;<a href="/set-log-level?level={{$Level}}&amp;refresh={{$.ThisPath}}">` +
 		/*						*/ `{{if eq $Level $.CurrentLogLevel}}{{$.LightOpen}}{{end}}` +
 		/*						*/ `{{$Level}}` +
 		/*						*/ `{{if eq $Level $.CurrentLogLevel}}{{$.LightClose}}{{end}}` +
@@ -55,12 +55,12 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		/*				*/ `{{end}}` +
 		/*			*/ `</li>` +
 		/*			*/ `<li>Profiler is ` +
-		/*				*/ `&nbsp;<a href="/profiler-enable?refresh=/">` +
+		/*				*/ `&nbsp;<a href="/profiler-enable?refresh={{$.ThisPath}}">` +
 		/*					*/ `{{if .ProfilerEnabled}}{{$.LightOpen}}{{end}}` +
 		/*					*/ `ENABLED` +
 		/*					*/ `{{if .ProfilerEnabled}}{{$.LightClose}}{{end}}` +
 		/*				*/ `</a>` +
-		/*				*/ `&nbsp;<a href="/profiler-disable?refresh=/">` +
+		/*				*/ `&nbsp;<a href="/profiler-disable?refresh={{$.ThisPath}}">` +
 		/*					*/ `{{if not .ProfilerEnabled}}{{$.LightOpen}}{{end}}` +
 		/*					*/ `DISABLED` +
 		/*					*/ `{{if not .ProfilerEnabled}}{{$.LightClose}}{{end}}` +
@@ -77,6 +77,7 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		`</html>`
 
 	params := struct {
+		ThisPath        string
 		Name            string
 		AppName         string
 		AppVersion      string
@@ -94,6 +95,11 @@ func (h *HTTP) root(id uint64, path string, w http.ResponseWriter, r *http.Reque
 		AppTags:         misc.AppTags(),
 		LogLevels:       log.GetLogLevels(),
 		ProfilerEnabled: h.commonConfig.ProfilerEnabled,
+	}
+
+	params.ThisPath, _ = h.NewPath("/")
+	if params.ThisPath == "" {
+		params.ThisPath = "/"
 	}
 
 	_, _, params.CurrentLogLevel = log.GetCurrentLogLevel()
