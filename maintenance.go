@@ -54,52 +54,9 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 		tags = " " + tags
 	}
 
-	page := `` +
-		`<!DOCTYPE html>` +
-		`<html lang="en">` +
-		/*	*/ `<head>` +
-		/*		*/ `<title>{{.Name}}</title>` +
-		/*	*/ `</head>` +
-		/*	*/ `<body>` +
-		/*		*/ `<h4>{{.Name}} <em>[{{.AppName}} {{.AppVersion}}{{if .AppTags}}&nbsp;{{.AppTags}}{{end}}]</em></h4>` +
-		/*		*/ `<ul>` +
-		/*			*/ `<li><a href="/info" target="info">Application info in the JSON format</a></li>` +
-		/*			*/ `<li><a href="/config" target="config">Prepared config</a></li>` +
-		/*			*/ `{{range $_, $CurrentLogLevel := .LogLevels}}` +
-		/*				*/ `<li>Change logging level{{if index $CurrentLogLevel 0}} for &lt;<strong>{{index $CurrentLogLevel 0}}</strong>&gt;{{end}}:` +
-		/*					*/ `{{range $_, $LevelName := $.LogLevelNames}}` +
-		/*						*/ `&nbsp;<a href="/set-log-level?facility={{index $CurrentLogLevel 0}}&amp;level={{$LevelName}}&amp;refresh={{$.ThisPath}}">` +
-		/*							*/ `{{if eq $LevelName (index $CurrentLogLevel 1)}}{{$.LightOpen}}{{end}}` +
-		/*							*/ `{{$LevelName}}` +
-		/*							*/ `{{if eq $LevelName (index $CurrentLogLevel 1)}}{{$.LightClose}}{{end}}` +
-		/*						*/ `</a>` +
-		/*					*/ `{{end}}` +
-		/*				*/ `</li>` +
-		/*			*/ `{{end}}` +
-		/*			*/ `<li>Profiler is ` +
-		/*				*/ `&nbsp;<a href="/profiler-enable?refresh={{$.ThisPath}}">` +
-		/*					*/ `{{if .ProfilerEnabled}}{{$.LightOpen}}{{end}}` +
-		/*					*/ `ENABLED` +
-		/*					*/ `{{if .ProfilerEnabled}}{{$.LightClose}}{{end}}` +
-		/*				*/ `</a>` +
-		/*				*/ `&nbsp;<a href="/profiler-disable?refresh={{$.ThisPath}}">` +
-		/*					*/ `{{if not .ProfilerEnabled}}{{$.LightOpen}}{{end}}` +
-		/*					*/ `DISABLED` +
-		/*					*/ `{{if not .ProfilerEnabled}}{{$.LightClose}}{{end}}` +
-		/*				*/ `</a>` +
-		/*			*/ `</li>` +
-		/*			*/ `{{if .ProfilerEnabled}}` +
-		/*				*/ `<li><a href="debug/pprof/" target="pprof">Show profiler</a></li>` +
-		/*			*/ `{{end}}` +
-		/*			*/ `{{range .Extra}}` +
-		/*				*/ `<li>{{.}}</li>` +
-		/*			*/ `{{end}}` +
-		/*		*/ `</ul>` +
-		/*	*/ `</body>` +
-		`</html>`
-
 	params := struct {
 		ThisPath        string
+		Copyright       string
 		Name            string
 		AppName         string
 		AppVersion      string
@@ -113,6 +70,7 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 		LightClose      template.HTML
 	}{
 		ThisPath:        r.URL.Path,
+		Copyright:       misc.Copyright(),
 		Name:            cfg.Name,
 		AppName:         misc.AppName(),
 		AppVersion:      misc.AppVersion(),
@@ -142,7 +100,7 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 	buf := bufpool.GetBuf()
 	defer bufpool.PutBuf(buf)
 
-	t, err := template.New("maintenance").Parse(page)
+	t, err := template.New("maintenance").Parse(rootPage)
 	if err != nil {
 		status = http.StatusInternalServerError
 		buf.WriteString(err.Error())

@@ -147,6 +147,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !h.IsPathReplaced(path) {
 		switch path {
+		case "/___.css":
+			WriteContentHeader(w, ContentTypeCSS)
+			w.WriteHeader(http.StatusOK)
+			w.Write(css)
+			return
+
 		case "/":
 			w.Header().Add("Location", "/maintenance")
 			w.WriteHeader(http.StatusPermanentRedirect)
