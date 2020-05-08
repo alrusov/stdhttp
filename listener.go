@@ -28,8 +28,7 @@ type (
 		extraFunc         ExtraInfoFunc
 		info              *infoBlock
 		extraRootItemFunc ExtraRootItemFunc
-		movedPathsFwd     misc.StringMap
-		movedPathsRev     misc.StringMap
+		removedPaths      misc.BoolMap
 	}
 
 	// Handler --
@@ -46,15 +45,14 @@ type (
 // NewListener --
 func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	h := &HTTP{
-		listenerCfg:   listenerCfg,
-		commonConfig:  config.GetCommon(),
-		mutex:         new(sync.Mutex),
-		handler:       handler,
-		extraFunc:     ExtraInfoFunc(nil),
-		info:          &infoBlock{},
-		connectionID:  0,
-		movedPathsFwd: make(misc.StringMap),
-		movedPathsRev: make(misc.StringMap),
+		listenerCfg:  listenerCfg,
+		commonConfig: config.GetCommon(),
+		mutex:        new(sync.Mutex),
+		handler:      handler,
+		extraFunc:    ExtraInfoFunc(nil),
+		info:         &infoBlock{},
+		connectionID: 0,
+		removedPaths: make(misc.BoolMap),
 	}
 
 	timeout := time.Duration(listenerCfg.Timeout) * time.Second
@@ -127,14 +125,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		path = "/"
 	}
 
-	srcPath := path
-
 	defer func() {
 		if !processed {
 			path = url404
 		}
 		h.info.Runtime.Requests.inc()
-		h.updateEndpointStat(srcPath)
+		h.updateEndpointStat(path)
 		misc.LogProcessingTime("", id, "http", "", t0)
 	}()
 
@@ -149,13 +145,15 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	path, _ = h.OldPath(srcPath)
-	_, moved := h.NewPath(srcPath)
-
-	if !moved {
+	if !h.IsPathReplaced(path) {
 		switch path {
 		case "/":
-			h.root(id, path, w, r)
+			w.Header().Add("Location", "/maintenance")
+			w.WriteHeader(http.StatusPermanentRedirect)
+			return
+
+		case "/maintenance":
+			h.maintenance(id, path, w, r)
 			return
 
 		case "/favicon.ico":
@@ -274,52 +272,29 @@ func AddLogFilterForRequest(exp string, replace string) error {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// MovePath --
-func (h *HTTP) MovePath(path string, newPath string) {
+// RemoveStdPath --
+func (h *HTTP) RemoveStdPath(path string) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	if path == "" {
-		return
-	}
-
-	if path == newPath || newPath == "" {
-		delete(h.movedPathsFwd, path)
-		delete(h.movedPathsRev, path)
-	} else {
-		h.movedPathsFwd[path] = newPath
-		h.movedPathsRev[newPath] = path
-	}
-
-	info, exists := h.info.Endpoints[path]
-	if exists {
-		h.info.Endpoints[newPath] = info
-		delete(h.info.Endpoints, path)
-	}
+	h.removedPaths[path] = true
 }
 
-// NewPath --
-func (h *HTTP) NewPath(path string) (newPath string, exists bool) {
+// CancelPathReplacing --
+func (h *HTTP) CancelPathReplacing(path string) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	newPath, exists = h.movedPathsFwd[path]
-	if !exists {
-		newPath = path
-	}
-	return
+	delete(h.removedPaths, path)
 }
 
-// OldPath --
-func (h *HTTP) OldPath(newPath string) (path string, exists bool) {
+// IsPathReplaced --
+func (h *HTTP) IsPathReplaced(path string) bool {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	path, exists = h.movedPathsRev[newPath]
-	if !exists {
-		path = newPath
-	}
-	return
+	_, exists := h.removedPaths[path]
+	return exists
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

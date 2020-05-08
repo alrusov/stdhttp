@@ -176,6 +176,7 @@ func (h *HTTP) initInfo() {
 	h.AddEndpointsInfo(misc.StringMap{
 		url404:              `Cumulatiive "Not Found" endpoint`,
 		"/":                 "Root page. Parameters: -",
+		"/maintenance":      "Application maintenance page. Parameters: -",
 		"/config":           "Get app config (secured). Parameters: -",
 		"/debug/pprof":      "Profiler root. Parameters: -",
 		"/exit":             "Exit application: pid=<pid>, [code=<code>]",
@@ -279,7 +280,7 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	info.Runtime.Now = misc.NowUTC()
 	info.Runtime.Uptime = int64(info.Runtime.Now.Sub(info.Runtime.StartTime).Seconds())
 	info.Runtime.IP = ip
-	_, _, info.Runtime.LogLevel = log.GetCurrentLogLevel()
+	_, _, info.Runtime.LogLevel = log.CurrentLogLevelEx()
 	info.Runtime.LogFile = log.FileName()
 	info.Runtime.ProfilerEnabled = h.commonConfig.ProfilerEnabled
 	info.Runtime.AllocSys = mem.Sys

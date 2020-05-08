@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
 
@@ -24,6 +25,8 @@ func (h *HTTP) File(id uint64, path string, w http.ResponseWriter, r *http.Reque
 
 	fn, err := misc.AbsPath(h.listenerCfg.Root + "/" + path)
 	if err != nil {
+		processed = true
+		Error(id, false, w, http.StatusBadRequest, "Bad request", err)
 		return
 	}
 
@@ -35,27 +38,27 @@ func (h *HTTP) File(id uint64, path string, w http.ResponseWriter, r *http.Reque
 
 	_, err = os.Stat(fn)
 	if err != nil {
+		// 404
 		return
 	}
 
-	processed = true
-
-	defer func() {
-		if err != nil {
-			Error(id, false, w, http.StatusInternalServerError, "Server error", err)
-		}
-	}()
-
 	fd, err := os.Open(fn)
 	if err != nil {
+		processed = true
+		Error(id, false, w, http.StatusInternalServerError, "Server error", err)
 		return
 	}
 	defer fd.Close()
 
 	WriteContentHeader(w, strings.TrimLeft(filepath.Ext(fn), "."))
 	w.WriteHeader(http.StatusOK)
-	io.Copy(w, bufio.NewReader(fd))
 
+	_, err = io.Copy(w, bufio.NewReader(fd))
+	if err != nil {
+		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+	}
+
+	processed = true
 	return
 }
 
