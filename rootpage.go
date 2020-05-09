@@ -37,7 +37,7 @@ var rootPage = `<!DOCTYPE html>
 		<ul>
 			<li><a href="/info" target="info">Application info [json]</a></li>
 			<li><a href="/config" target="config">Prepared config [text]</a></li>
-			<li>Profiler is 
+			<li>Profiler is
 				<a href="/profiler-enable?refresh={{$.ThisPath}}">{{if .ProfilerEnabled}}{{$.LightOpen}}{{end}}ENABLED{{if .ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
 				<a href="/profiler-disable?refresh={{$.ThisPath}}">{{if not .ProfilerEnabled}}{{$.LightOpen}}{{end}}DISABLED{{if not .ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
 			</li>
@@ -51,7 +51,7 @@ var rootPage = `<!DOCTYPE html>
 
 		<hr style="margin-top: 15px;" />
 		<p class="top"><small><em>{{.Copyright}}</em></small></p>
-		
+
 	</body>
 </html>
 `

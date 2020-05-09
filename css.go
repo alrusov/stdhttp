@@ -319,7 +319,7 @@ table.informer td, table.informer td * {
 	text-align: center !important;
 }
 
-table.center { 
+table.center {
 	margin-left: auto !important;
 	margin-right: auto !important;
 }
