@@ -117,14 +117,38 @@ func Error(id uint64, answerSent bool, w http.ResponseWriter, httpCode int, mess
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // ReturnRefresh --
-func ReturnRefresh(w http.ResponseWriter, r *http.Request, code int) {
-	path := r.URL.Query().Get("refresh")
-	if path != "" {
-		w.Header().Set("Location", path)
-		w.WriteHeader(http.StatusSeeOther)
-	} else {
-		w.WriteHeader(code)
+func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode int, forceTo string, data []byte, err error) {
+	path := forceTo
+	if path == "" {
+		path = r.URL.Query().Get("refresh")
 	}
+
+	if path == "" {
+		if err == nil {
+			w.WriteHeader(httpCode)
+			if data != nil {
+				w.Write(data)
+			}
+			return
+		}
+
+		Error(id, false, w, httpCode, string(data), err)
+		return
+	}
+
+	p, e := url.Parse(path)
+	if e == nil {
+		if err != nil {
+			params := p.Query()
+			params.Set("___err", err.Error())
+			p.RawQuery = params.Encode()
+			Error(id, true, w, httpCode, string(data), err)
+		}
+	}
+	path = p.String()
+
+	w.Header().Set("Location", path)
+	w.WriteHeader(http.StatusSeeOther)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

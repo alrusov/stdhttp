@@ -49,18 +49,14 @@ func (d dblStrArray) Swap(i, j int) {
 func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *http.Request) {
 	cfg := config.GetCommon()
 
-	tags := misc.AppTags()
-	if tags != "" {
-		tags = " " + tags
-	}
-
 	params := struct {
 		ThisPath        string
 		Copyright       string
+		ErrMsg          string
 		Name            string
-		AppName         string
-		AppVersion      string
-		AppTags         string
+		App             string
+		Version         string
+		Tags            string
 		CurrentLogLevel string
 		LogLevelNames   []string
 		LogLevels       dblStrArray
@@ -71,10 +67,11 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 	}{
 		ThisPath:        r.URL.Path,
 		Copyright:       misc.Copyright(),
+		ErrMsg:          r.URL.Query().Get("___err"),
 		Name:            cfg.Name,
-		AppName:         misc.AppName(),
-		AppVersion:      misc.AppVersion(),
-		AppTags:         misc.AppTags(),
+		App:             misc.AppName(),
+		Version:         misc.AppVersion(),
+		Tags:            misc.AppTags(),
 		LogLevelNames:   log.GetLogLevels(),
 		ProfilerEnabled: h.commonConfig.ProfilerEnabled,
 	}
@@ -116,7 +113,11 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 
 	WriteContentHeader(w, ContentTypeHTML)
 	w.WriteHeader(status)
-	io.Copy(w, buf)
+
+	_, err = io.Copy(w, buf)
+	if err != nil {
+		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

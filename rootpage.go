@@ -11,14 +11,16 @@ var rootPage = `<!DOCTYPE html>
 	</head>
 
 	<body>
-		<h4><em>{{.Name}} [{{.AppName}} {{.AppVersion}}{{if .AppTags}}&nbsp;{{.AppTags}}{{end}}]</em></h4>
+		<h4><img src="/favicon.ico" style="width: 16px; height: 16px; position: relative; top: 2px;" alt="" />&nbsp;<em>{{.Name}} [{{.App}} {{.Version}}{{if .Tags}}&nbsp;{{.Tags}}{{end}}]</em></h4>
+
+		{{if .ErrMsg}}<p><strong class="attention">{{.ErrMsg}}</strong></p>{{end}}
 
 		<h6>Logging level</h6>
 		<table class="grd">
 		{{range $_, $CurrentLogLevel := .LogLevels}}
 			<tr>
 				<th class="left">
-					{{if index $CurrentLogLevel 0}}{{index $CurrentLogLevel 0}}{{else}}main{{end}}
+					{{if index $CurrentLogLevel 0}}{{index $CurrentLogLevel 0}}{{else}}default{{end}}
 				</th>
 				{{range $_, $LevelName := $.LogLevelNames}}
 					<td>

@@ -1,6 +1,7 @@
 package stdhttp
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,22 +12,23 @@ import (
 
 // changeLogLevel --
 func (h *HTTP) changeLogLevel(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+	var err error
+
 	queryParams := r.URL.Query()
 	facility := queryParams.Get("facility")
 	levelName := strings.ToUpper(queryParams.Get("level"))
 
+	status := http.StatusNoContent
+
 	f := log.GetFacility(facility)
 	if f == nil {
-		Error(id, false, w, http.StatusBadRequest, `"Unknown facility "`+facility+`"`, nil)
-		return
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`"Unknown facility "%s"`, facility)
 	}
 
-	if _, err := f.SetCurrentLogLevel(levelName, ""); err != nil {
-		Error(id, false, w, http.StatusBadRequest, "Illegal value provided", err)
-		return
-	}
+	f.SetLogLevel(levelName, "")
 
-	ReturnRefresh(w, r, http.StatusNoContent)
+	ReturnRefresh(id, w, r, status, "", nil, err)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

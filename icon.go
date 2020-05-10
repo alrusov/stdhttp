@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
 
@@ -33,7 +34,10 @@ func (h *HTTP) icon(id uint64, path string, w http.ResponseWriter, r *http.Reque
 
 	WriteContentHeader(w, ContentTypeIcon)
 	w.WriteHeader(http.StatusOK)
-	io.Copy(w, bufio.NewReader(fd))
+	_, err = io.Copy(w, bufio.NewReader(fd))
+	if err != nil {
+		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

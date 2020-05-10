@@ -193,12 +193,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		case "/profiler-enable":
 			h.commonConfig.ProfilerEnabled = true
-			ReturnRefresh(w, r, http.StatusNoContent)
+			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
 			return
 
 		case "/profiler-disable":
 			h.commonConfig.ProfilerEnabled = false
-			ReturnRefresh(w, r, http.StatusNoContent)
+			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
 			return
 		}
 
