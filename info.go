@@ -221,7 +221,7 @@ func (h *HTTP) newStat() *urlStat {
 
 func (h *HTTP) updateEndpointStat(path string) {
 	h.mutex.Lock()
-	h.mutex.Unlock()
+	defer h.mutex.Unlock()
 
 	ep, exists := h.info.Endpoints[path]
 	if !exists {
