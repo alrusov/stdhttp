@@ -131,7 +131,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		h.info.Runtime.Requests.inc()
 		h.updateEndpointStat(path)
-		misc.LogProcessingTime("", id, "http", "", t0)
+		misc.LogProcessingTime("", "", id, "http", "", t0)
 	}()
 
 	if h.isEndpointDisabled(path) {
