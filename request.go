@@ -43,7 +43,7 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 
 // RequestEx --
 // Don't forget call bufpool.PutBuf(returned_buf)
-func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, http.Header, error) {
+func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
 	params := url.Values{}
 
 	if data == nil {
@@ -136,10 +136,10 @@ func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data
 	}
 
 	if resp.StatusCode/100 != 2 {
-		return bodyBuf, resp.Header, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
+		return bodyBuf, resp, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
 	}
 
-	return bodyBuf, resp.Header, nil
+	return bodyBuf, resp, nil
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

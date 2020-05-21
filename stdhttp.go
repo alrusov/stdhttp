@@ -198,7 +198,7 @@ func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err erro
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // WriteReply --
-func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, data []byte) (err error) {
+func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, extraHeaders misc.StringMap, data []byte) (err error) {
 	if gzipRecomended(data) {
 		var gzbuf bytes.Buffer
 		gz := gzip.NewWriter(&gzbuf)
@@ -216,6 +216,12 @@ func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, data []
 
 	if contentCode != "" {
 		WriteContentHeader(w, contentCode)
+	}
+
+	if extraHeaders != nil {
+		for n, v := range extraHeaders {
+			w.Header().Set(n, v)
+		}
 	}
 
 	w.WriteHeader(httpCode)
