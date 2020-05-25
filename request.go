@@ -35,12 +35,12 @@ func parseBoolOption(opt string) bool {
 
 // Request --
 func Request(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, error) {
-	buf, _, err := RequestEx(method, uri, timeout, opts, data)
+	buf, _, err := RequestEx(method, uri, timeout, opts, nil, data)
 	return buf, err
 }
 
 // RequestEx --
-func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
+func RequestEx(method string, uri string, timeout int, opts misc.StringMap, extraHeaders misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
 	params := url.Values{}
 
 	if data == nil {
@@ -84,12 +84,18 @@ func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data
 		return nil, nil, err
 	}
 
-	if user != "" || password != "" {
-		req.SetBasicAuth(user, password)
+	if withGzip {
+		req.Header.Set("Content-Encoding", "gzip")
 	}
 
-	if withGzip {
-		req.Header.Add("Content-Encoding", "gzip")
+	if extraHeaders != nil {
+		for n, v := range extraHeaders {
+			req.Header.Set(n, v)
+		}
+	}
+
+	if user != "" || password != "" {
+		req.SetBasicAuth(user, password)
 	}
 
 	req.URL.RawQuery = params.Encode()
