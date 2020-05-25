@@ -2,7 +2,6 @@ package stdhttp
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +9,6 @@ import (
 	"net/url"
 	"sync/atomic"
 
-	"github.com/alrusov/bufpool"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
@@ -26,6 +24,8 @@ const (
 	ContentTypeJSON = "json"
 	// ContentTypeIcon --
 	ContentTypeIcon = "ico"
+	// ContentTypeBin --
+	ContentTypeBin = "bin"
 
 	// MethodGET --
 	MethodGET = "GET"
@@ -55,6 +55,7 @@ var (
 		ContentTypeText: "text/plain; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
 		ContentTypeIcon: "image/x-icon",
+		ContentTypeBin:  "application/octet-stream",
 	}
 )
 
@@ -161,24 +162,13 @@ func ReadData(header http.Header, body io.ReadCloser) (bodyBuf *bytes.Buffer, co
 	}
 
 	if header.Get("Content-Encoding") == "gzip" {
-		var b *gzip.Reader
-		b, err = gzip.NewReader(body)
-		if b != nil {
-			defer b.Close()
-		}
-
-		if err != nil || b == nil {
-			code = http.StatusBadRequest
-			return
-		}
-
-		body = b
+		bodyBuf, err = misc.GzipUnpack(body)
+	} else {
+		bodyBuf = new(bytes.Buffer)
+		_, err = bodyBuf.ReadFrom(body)
 	}
 
-	bodyBuf = bufpool.GetBuf()
-
-	if _, err = bodyBuf.ReadFrom(body); err != nil {
-		bufpool.PutBuf(bodyBuf)
+	if err != nil {
 		bodyBuf = nil
 		code = http.StatusInternalServerError
 		return
@@ -199,18 +189,14 @@ func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err erro
 
 // WriteReply --
 func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, extraHeaders misc.StringMap, data []byte) (err error) {
-	if gzipRecomended(data) {
-		var gzbuf bytes.Buffer
-		gz := gzip.NewWriter(&gzbuf)
-
-		if _, err = gz.Write(data); err != nil {
+	if len(data) > 0 && (extraHeaders == nil || extraHeaders["Content-Encoding"] == "") && gzipRecommended(data) {
+		var b *bytes.Buffer
+		b, err = misc.GzipPack(bytes.NewReader(data))
+		if err != nil {
 			return err
 		}
-		if err = gz.Close(); err != nil {
-			return err
-		}
-		data = gzbuf.Bytes()
 
+		data = b.Bytes()
 		w.Header().Set("Content-Encoding", "gzip")
 	}
 
@@ -257,7 +243,7 @@ func SetMinSizeForGzip(size int) {
 	atomic.StoreInt32(&minSizeForGzip, int32(size))
 }
 
-func gzipRecomended(data []byte) bool {
+func gzipRecommended(data []byte) bool {
 	if data == nil {
 		return false
 	}

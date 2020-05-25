@@ -2,7 +2,6 @@ package stdhttp
 
 import (
 	"bytes"
-	"compress/gzip"
 	"crypto/tls"
 	"errors"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alrusov/bufpool"
 	"github.com/alrusov/config"
 	"github.com/alrusov/misc"
 )
@@ -42,7 +40,6 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, data [
 }
 
 // RequestEx --
-// Don't forget call bufpool.PutBuf(returned_buf)
 func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
 	params := url.Values{}
 
@@ -50,7 +47,7 @@ func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data
 		data = make([]byte, 0)
 	}
 
-	withGzip := gzipRecomended(data)
+	withGzip := gzipRecommended(data)
 	skipTLSverification := false
 	user := ""
 	password := ""
@@ -74,22 +71,15 @@ func RequestEx(method string, uri string, timeout int, opts misc.StringMap, data
 		}
 	}
 
-	preparedData := data
 	if withGzip {
-		buf := bufpool.GetBuf()
-		defer bufpool.PutBuf(buf)
-		gz := gzip.NewWriter(buf)
-
-		if _, err := gz.Write(data); err != nil {
+		b, err := misc.GzipPack(bytes.NewReader(data))
+		if err != nil {
 			return nil, nil, err
 		}
-		if err := gz.Close(); err != nil {
-			return nil, nil, err
-		}
-		preparedData = buf.Bytes()
+		data = b.Bytes()
 	}
 
-	req, err := http.NewRequest(method, uri, bytes.NewReader(preparedData))
+	req, err := http.NewRequest(method, uri, bytes.NewReader(data))
 	if err != nil {
 		return nil, nil, err
 	}

@@ -1,12 +1,11 @@
 package stdhttp
 
 import (
+	"bytes"
 	"html/template"
 	"io"
 	"net/http"
 	"sort"
-
-	"github.com/alrusov/bufpool"
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
@@ -94,8 +93,7 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 
 	status := http.StatusOK
 
-	buf := bufpool.GetBuf()
-	defer bufpool.PutBuf(buf)
+	buf := new(bytes.Buffer)
 
 	t, err := template.New("maintenance").Parse(rootPage)
 	if err != nil {
