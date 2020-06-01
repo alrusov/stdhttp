@@ -133,6 +133,9 @@ func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode i
 			return
 		}
 
+		if len(data) == 0 {
+			data = []byte(err.Error())
+		}
 		Error(id, false, w, httpCode, string(data), err)
 		return
 	}

@@ -23,10 +23,10 @@ func (h *HTTP) changeLogLevel(id uint64, path string, w http.ResponseWriter, r *
 	f := log.GetFacility(facility)
 	if f == nil {
 		status = http.StatusBadRequest
-		err = fmt.Errorf(`"Unknown facility "%s"`, facility)
+		err = fmt.Errorf(`Unknown facility "%s"`, facility)
+	} else {
+		f.SetLogLevel(levelName, "")
 	}
-
-	f.SetLogLevel(levelName, "")
 
 	ReturnRefresh(id, w, r, status, "", nil, err)
 }
