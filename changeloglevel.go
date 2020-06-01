@@ -18,14 +18,16 @@ func (h *HTTP) changeLogLevel(id uint64, path string, w http.ResponseWriter, r *
 	facility := queryParams.Get("facility")
 	levelName := strings.ToUpper(queryParams.Get("level"))
 
-	status := http.StatusNoContent
-
 	f := log.GetFacility(facility)
 	if f == nil {
-		status = http.StatusBadRequest
 		err = fmt.Errorf(`Unknown facility "%s"`, facility)
 	} else {
-		f.SetLogLevel(levelName, "")
+		_, err = f.SetLogLevel(levelName, "")
+	}
+
+	status := http.StatusNoContent
+	if err != nil {
+		status = http.StatusBadRequest
 	}
 
 	ReturnRefresh(id, w, r, status, "", nil, err)
