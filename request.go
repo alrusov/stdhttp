@@ -57,7 +57,7 @@ func RequestEx(method string, uri string, timeout int, opts misc.StringMap, extr
 			if strings.HasPrefix(k, ".") {
 				switch k {
 				case RequestOptionGzip:
-					withGzip = parseBoolOption(v)
+					withGzip = withGzip && parseBoolOption(v)
 				case RequestOptionSkipTLSVerification:
 					skipTLSverification = parseBoolOption(v)
 				case RequestOptionBasicAuthUser:
@@ -123,12 +123,12 @@ func RequestEx(method string, uri string, timeout int, opts misc.StringMap, extr
 	}
 
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	bodyBuf, _, err := ReadData(resp.Header, resp.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	if resp.StatusCode/100 != 2 {
