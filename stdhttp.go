@@ -2,13 +2,13 @@ package stdhttp
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"sync/atomic"
 
+	"github.com/alrusov/jsonw"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
@@ -86,7 +86,7 @@ func WriteContentHeader(w http.ResponseWriter, contentType string) error {
 
 // SendJSON --
 func SendJSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	m, err := json.Marshal(data)
+	m, err := jsonw.Marshal(data)
 	if err != nil {
 		m = []byte(err.Error())
 	}
