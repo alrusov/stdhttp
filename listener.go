@@ -134,12 +134,16 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		misc.LogProcessingTime("", "", id, "http", "", t0)
 	}()
 
-	if h.isEndpointDisabled(path) {
+	if isPathInList(path, h.listenerCfg.DisabledEndpoints) {
 		Error(id, false, w, http.StatusLocked, `Endpoint "`+path+`" is disabled`, nil)
 		return
 	}
 
-	if h.listenerCfg.BasicAuthEnabled {
+	if h.listenerCfg.JWTsecret != "" && isPathInList(path, h.listenerCfg.JWTEndpoints) {
+		if !h.jwtAuthHandler(id, path, w, r) {
+			return
+		}
+	} else if h.listenerCfg.BasicAuthEnabled {
 		if !h.basicAuthHandler(id, path, w, r) {
 			return
 		}
@@ -223,20 +227,17 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-/*
-isEndpointDisabled -- see test
-*/
-func (h *HTTP) isEndpointDisabled(path string) bool {
-	if len(h.commonConfig.DisabledEndpoints) == 0 {
+func isPathInList(path string, list map[string]bool) bool {
+	if len(list) == 0 {
 		return false
 	}
 
-	_, exists := h.commonConfig.DisabledEndpoints["*"]
+	_, exists := list["*"]
 	if exists {
 		return true
 	}
 
-	_, exists = h.commonConfig.DisabledEndpoints[path]
+	_, exists = list[path]
 	if exists {
 		return true
 	}
@@ -252,7 +253,7 @@ func (h *HTTP) isEndpointDisabled(path string) bool {
 			break
 		}
 
-		_, exists = h.commonConfig.DisabledEndpoints[path+"/*"]
+		_, exists = list[path+"/*"]
 		if exists {
 			return true
 		}

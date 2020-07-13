@@ -2,8 +2,6 @@ package stdhttp
 
 import (
 	"testing"
-
-	"github.com/alrusov/config"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -35,13 +33,7 @@ func TestIsEndpointDisabled(t *testing.T) {
 	for i, p := range data {
 		i++
 
-		h := &HTTP{
-			commonConfig: &config.Common{
-				DisabledEndpoints: p.config,
-			},
-		}
-
-		result := h.isEndpointDisabled(p.path)
+		result := isPathInList(p.path, p.config)
 		if result != p.disabled {
 			t.Errorf(`[%d] failed: config "%v", path "%s", result "%v", expected "%v"`, i, p.config, p.path, result, p.disabled)
 		}

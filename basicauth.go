@@ -35,7 +35,7 @@ func (h *HTTP) checkLogin(u string, p string) error {
 		return nil
 	}
 
-	return fmt.Errorf(`Illegal login or password for %q`, u)
+	return fmt.Errorf(`Illegal login or password for "%s"`, u)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
