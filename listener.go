@@ -182,6 +182,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.showConfig(id, path, w, r)
 			return
 
+		case "/jwt-login":
+			h.jwtLogin(id, path, w, r)
+			return
+
 		case "/ping":
 			tags := misc.AppTags()
 			if tags != "" {

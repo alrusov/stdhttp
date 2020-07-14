@@ -182,6 +182,7 @@ func (h *HTTP) initInfo() {
 		"/exit":             "Exit application: pid=<pid>, [code=<code>]",
 		"/favicon.ico":      "favicon.ico. Parameters: -",
 		"/info":             "Get app information. Parameters: -",
+		"/jwt-login":        "Get jwt token. Parameters: u=<username>, p=<password>",
 		"/ping":             "Checking if the application is running. Parameters: -",
 		"/profiler-disable": "Disable profiler. Parameters: -",
 		"/profiler-enable":  "Enable profiler. Parameters: -",

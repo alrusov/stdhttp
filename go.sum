@@ -1,5 +1,5 @@
-github.com/alrusov/config v0.1.17 h1:9clAuHjJruD453ZWQYwU57ozvgUoHgcChxHxT6orlMM=
-github.com/alrusov/config v0.1.17/go.mod h1:4HqYLuqee75HFhoO7lO5BqDrd3EXFiXFWxYENKXqpJ0=
+github.com/alrusov/config v0.1.18 h1:e18OrV4nvAGRBimlHgx6ZLYQSJhG2nE/xBSDhhuxY5k=
+github.com/alrusov/config v0.1.18/go.mod h1:4HqYLuqee75HFhoO7lO5BqDrd3EXFiXFWxYENKXqpJ0=
 github.com/alrusov/jsonw v0.1.0 h1:A4Ymili5ieu7pvtK+s52Ng75qCM6K/Z5h5j9twYyjlk=
 github.com/alrusov/jsonw v0.1.0/go.mod h1:azE1xRu6TOXoMgG42/I/ZMhzfFb5FkUziUlZ4KR4rCs=
 github.com/alrusov/loadavg v0.1.0 h1:xjU30OtVjICeGfljn++i2GSpFlQnAqzo+3tvsQB3344=

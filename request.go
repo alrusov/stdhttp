@@ -33,14 +33,10 @@ func parseBoolOption(opt string) bool {
 	return false
 }
 
-// Request --
-func Request(method string, uri string, timeout int, opts misc.StringMap, data []byte) (*bytes.Buffer, error) {
-	buf, _, err := RequestEx(method, uri, timeout, opts, nil, data)
-	return buf, err
-}
+//----------------------------------------------------------------------------------------------------------------------------//
 
-// RequestEx --
-func RequestEx(method string, uri string, timeout int, opts misc.StringMap, extraHeaders misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
+// Request --
+func Request(method string, uri string, timeout int, opts misc.StringMap, extraHeaders misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
 	params := url.Values{}
 
 	if data == nil {
