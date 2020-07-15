@@ -236,12 +236,22 @@ func isPathInList(path string, list map[string]bool) bool {
 		return false
 	}
 
-	_, exists := list["*"]
+	_, exists := list["!"+path]
+	if exists {
+		return false
+	}
+
+	_, exists = list["*"]
 	if exists {
 		return true
 	}
 
 	_, exists = list[path]
+	if exists {
+		return true
+	}
+
+	_, exists = list[path+"*"]
 	if exists {
 		return true
 	}
@@ -262,6 +272,10 @@ func isPathInList(path string, list map[string]bool) bool {
 			return true
 		}
 
+		_, exists = list[path+"*"]
+		if exists {
+			return true
+		}
 	}
 
 	return false
