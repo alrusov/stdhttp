@@ -162,28 +162,28 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusPermanentRedirect)
 			return
 
-		case "/maintenance":
-			h.maintenance(id, path, w, r)
-			return
-
-		case "/favicon.ico":
-			h.icon(id, path, w, r)
+		case "/config":
+			h.showConfig(id, path, w, r)
 			return
 
 		case "/exit":
 			h.exit(id, path, w, r)
 			return
 
+		case "/favicon.ico":
+			h.icon(id, path, w, r)
+			return
+
 		case "/info":
 			h.showInfo(id, path, w, r)
 			return
 
-		case "/config":
-			h.showConfig(id, path, w, r)
-			return
-
 		case "/jwt-login":
 			h.jwtLogin(id, path, w, r)
+			return
+
+		case "/maintenance":
+			h.maintenance(id, path, w, r)
 			return
 
 		case "/ping":
@@ -195,8 +195,9 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 			return
 
-		case "/set-log-level":
-			h.changeLogLevel(id, path, w, r)
+		case "/profiler-disable":
+			h.commonConfig.ProfilerEnabled = false
+			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
 			return
 
 		case "/profiler-enable":
@@ -204,10 +205,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
 			return
 
-		case "/profiler-disable":
-			h.commonConfig.ProfilerEnabled = false
-			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
+		case "/set-log-level":
+			h.changeLogLevel(id, path, w, r)
 			return
+
 		}
 
 		if h.profiler(id, path, w, r) {

@@ -175,6 +175,7 @@ func (h *HTTP) initInfo() {
 	info.Endpoints = make(map[string]*endpointInfo)
 	h.AddEndpointsInfo(misc.StringMap{
 		url404:              `Cumulatiive "Not Found" endpoint`,
+		"/___.css":          "General purpose css",
 		"/":                 "Root page. Parameters: -",
 		"/maintenance":      "Application maintenance page. Parameters: -",
 		"/config":           "Get app config (secured). Parameters: -",
