@@ -160,6 +160,7 @@ func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode i
 // ReadData --
 func ReadData(header http.Header, body io.ReadCloser) (bodyBuf *bytes.Buffer, code int, err error) {
 	if body == nil {
+		bodyBuf = &bytes.Buffer{}
 		code = http.StatusOK
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alrusov/config"
 	"github.com/alrusov/log"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -13,6 +14,11 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func (h *HTTP) jwtAuthHandler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+	return JWTauthHandler(h.listenerCfg, id, path, w, r)
+}
+
+// JWTauthHandler --
+func JWTauthHandler(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
 	code, msg := func() (code int, msg string) {
 		code = http.StatusForbidden
 		msg = ""
@@ -30,7 +36,7 @@ func (h *HTTP) jwtAuthHandler(id uint64, path string, w http.ResponseWriter, r *
 		}
 
 		keyFunc := func(t *jwt.Token) (interface{}, error) {
-			return []byte(h.listenerCfg.JWTsecret), nil
+			return []byte(cfg.JWTsecret), nil
 		}
 
 		claims := jwt.MapClaims{}
@@ -48,7 +54,7 @@ func (h *HTTP) jwtAuthHandler(id uint64, path string, w http.ResponseWriter, r *
 		}
 
 		u, _ := ui.(string)
-		_, exists = h.listenerCfg.Users[u]
+		_, exists = cfg.Users[u]
 		if !exists {
 			msg = fmt.Sprintf(`Unknown user "%v"`, ui)
 			return
@@ -83,12 +89,19 @@ func (c jwtClaims) Valid() error {
 	return nil
 }
 
+//----------------------------------------------------------------------------------------------------------------------------//
+
 func (h *HTTP) jwtLogin(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+	return JWTloginHandler(h.listenerCfg, id, path, w, r)
+}
+
+// JWTloginHandler --
+func JWTloginHandler(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
 	code, msg := func() (code int, msg string) {
 		code = http.StatusForbidden
 		msg = ""
 
-		if h.listenerCfg.JWTsecret == "" {
+		if cfg.JWTsecret == "" {
 			msg = `JWT auth is disabled`
 			return
 		}
@@ -101,7 +114,7 @@ func (h *HTTP) jwtLogin(id uint64, path string, w http.ResponseWriter, r *http.R
 		}
 		p := queryParams.Get("p")
 
-		password, exists := h.listenerCfg.Users[u]
+		password, exists := cfg.Users[u]
 		if !exists || password != p {
 			msg = fmt.Sprintf(`Illegal login or password for "%s"`, u)
 			return
@@ -109,12 +122,12 @@ func (h *HTTP) jwtLogin(id uint64, path string, w http.ResponseWriter, r *http.R
 
 		claims := jwtClaims{
 			User: u,
-			Exp:  time.Now().Add(time.Duration(h.listenerCfg.JWTlifetime) * time.Second).Unix(),
+			Exp:  time.Now().Add(time.Duration(cfg.JWTlifetime) * time.Second).Unix(),
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-		msg, err := token.SignedString([]byte(h.listenerCfg.JWTsecret))
+		msg, err := token.SignedString([]byte(cfg.JWTsecret))
 		if err != nil {
 			msg = err.Error()
 			return
