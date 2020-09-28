@@ -19,7 +19,7 @@ var rootPage = `<!DOCTYPE html>
 		<table class="grd">
 		{{range $_, $CurrentLogLevel := .LogLevels}}
 			<tr>
-				<th class="left">
+				<th class="left nobr">
 					{{if index $CurrentLogLevel 0}}{{index $CurrentLogLevel 0}}{{else}}default{{end}}
 				</th>
 				{{range $_, $LevelName := $.LogLevelNames}}
