@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/tls"
 	"errors"
+	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -31,6 +33,23 @@ func parseBoolOption(opt string) bool {
 	}
 
 	return false
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+type unixSocketDialer struct {
+	net.Dialer
+}
+
+func (d *unixSocketDialer) Dial(_ string, path string) (net.Conn, error) {
+	return d.Dialer.Dial("unix",
+		strings.ReplaceAll(
+			strings.Split(path, ":")[0],
+			".",
+			"/",
+		)+
+			".sock",
+	)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -100,14 +119,32 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, extraH
 		timeout = config.ClientDefaultTimeout
 	}
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: skipTLSverification,
-		},
+	realTimeout := time.Duration(timeout) * time.Second
+
+	var tr *http.Transport
+	switch req.URL.Scheme {
+	case "http", "https":
+		tr = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: skipTLSverification,
+			},
+		}
+	case "unix":
+		req.URL.Scheme = "http"
+		tr = &http.Transport{
+			Dial: (&unixSocketDialer{
+				net.Dialer{
+					Timeout:   realTimeout,
+					KeepAlive: realTimeout,
+				},
+			}).Dial,
+		}
+	default:
+		return nil, nil, fmt.Errorf(`Unknown scheme "%s"`, req.URL.Scheme)
 	}
 
 	clnt := &http.Client{
-		Timeout:   time.Duration(timeout) * time.Second,
+		Timeout:   realTimeout,
 		Transport: tr,
 	}
 
