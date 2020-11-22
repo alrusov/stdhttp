@@ -49,35 +49,35 @@ type (
 	}
 
 	runtimeBlock struct {
-		StartTime       time.Time                `json:"startTime"`
-		Now             time.Time                `json:"now"`
-		Uptime          int64                    `json:"upTime"`
-		PID             int                      `json:"pid"`
-		User            idDef                    `json:"user"`
-		Group           idDef                    `json:"group"`
-		EffectiveUser   idDef                    `json:"effectiveUser"`
-		EffectiveGroup  idDef                    `json:"effectiveGroup"`
-		Host            string                   `json:"host"`
-		IP              []string                 `json:"ip"`
-		CommandLine     string                   `json:"commandLine"`
-		Application     string                   `json:"application"`
-		WorkDir         string                   `json:"workDir"`
-		LogLevel        string                   `json:"logLevel"`
-		LogFile         string                   `json:"logFile"`
-		ProfilerEnabled bool                     `json:"profilerEnabled"`
-		AllocSys        uint64                   `json:"allocSys"`
-		HeapSys         uint64                   `json:"heapSys"`
-		HeapInuse       uint64                   `json:"HeapInuse"`
-		HeapObjects     uint64                   `json:"HeapObjects"`
-		StackSys        uint64                   `json:"stackSys"`
-		StackInuse      uint64                   `json:"StackInuse"`
-		NumCPU          int                      `json:"numCPU"`
-		GoMaxProcs      int                      `json:"goMaxProcs"`
-		NumGoroutine    int                      `json:"numGoroutine"`
-		LoadAvgPeriod   int                      `json:"loadAvgPeriod"`
-		Requests        *urlStat                 `json:"requests"`
-		Pools           map[string]*bufpool.Stat `json:"pools"`
-		poolsUpdate     map[string]bufpool.GetStatFunc
+		StartTime       time.Time         `json:"startTime"`
+		Now             time.Time         `json:"now"`
+		Uptime          int64             `json:"upTime"`
+		PID             int               `json:"pid"`
+		User            idDef             `json:"user"`
+		Group           idDef             `json:"group"`
+		EffectiveUser   idDef             `json:"effectiveUser"`
+		EffectiveGroup  idDef             `json:"effectiveGroup"`
+		Host            string            `json:"host"`
+		IP              []string          `json:"ip"`
+		CommandLine     string            `json:"commandLine"`
+		Application     string            `json:"application"`
+		WorkDir         string            `json:"workDir"`
+		LogLevel        string            `json:"logLevel"`
+		LogFile         string            `json:"logFile"`
+		ProfilerEnabled bool              `json:"profilerEnabled"`
+		AllocSys        uint64            `json:"allocSys"`
+		HeapSys         uint64            `json:"heapSys"`
+		HeapInuse       uint64            `json:"HeapInuse"`
+		HeapObjects     uint64            `json:"HeapObjects"`
+		StackSys        uint64            `json:"stackSys"`
+		StackInuse      uint64            `json:"StackInuse"`
+		NumCPU          int               `json:"numCPU"`
+		GoMaxProcs      int               `json:"goMaxProcs"`
+		NumGoroutine    int               `json:"numGoroutine"`
+		LoadAvgPeriod   int               `json:"loadAvgPeriod"`
+		Requests        *urlStat          `json:"requests"`
+		Pools           misc.InterfaceMap `json:"pools"`
+		poolsUpdate     map[string]PoolStatFunc
 	}
 
 	endpointInfo struct {
@@ -90,6 +90,9 @@ type (
 		la      *loadavg.LoadAvg
 		LoadAvg float64 `json:"loadAvg"`
 	}
+
+	// PoolStatFunc --
+	PoolStatFunc func() interface{}
 
 	// ExtraInfoFunc --
 	ExtraInfoFunc func() interface{}
@@ -145,8 +148,8 @@ func (h *HTTP) initInfo() {
 		LoadAvgPeriod: h.commonConfig.LoadAvgPeriod,
 		Requests:      h.newStat(),
 
-		Pools: map[string]*bufpool.Stat{},
-		poolsUpdate: map[string]bufpool.GetStatFunc{
+		Pools: map[string]interface{}{},
+		poolsUpdate: map[string]PoolStatFunc{
 			"bufpool": bufpool.GetStat,
 		},
 	}
@@ -284,7 +287,7 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	sort.Strings(ip)
 
 	var mem runtime.MemStats
-	runtime.GC()
+	//runtime.GC()
 	runtime.ReadMemStats(&mem)
 
 	info.Runtime.Now = misc.NowUTC()
@@ -303,9 +306,7 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	info.Runtime.Requests.update()
 
 	for name, f := range info.Runtime.poolsUpdate {
-		stat := f()
-		stat.InUse = stat.Issued - stat.Released
-		info.Runtime.Pools[name] = stat
+		info.Runtime.Pools[name] = f()
 	}
 
 	info.LastLog = log.GetLastLog()
@@ -320,7 +321,7 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // AddPool --
-func (h *HTTP) AddPool(name string, f bufpool.GetStatFunc) {
+func (h *HTTP) AddPool(name string, f PoolStatFunc) {
 	h.info.Runtime.poolsUpdate[name] = f
 }
 
