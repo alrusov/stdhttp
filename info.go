@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/alrusov/bufpool"
 	"github.com/alrusov/loadavg"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
@@ -48,33 +49,35 @@ type (
 	}
 
 	runtimeBlock struct {
-		StartTime       time.Time `json:"startTime"`
-		Now             time.Time `json:"now"`
-		Uptime          int64     `json:"upTime"`
-		PID             int       `json:"pid"`
-		User            idDef     `json:"user"`
-		Group           idDef     `json:"group"`
-		EffectiveUser   idDef     `json:"effectiveUser"`
-		EffectiveGroup  idDef     `json:"effectiveGroup"`
-		Host            string    `json:"host"`
-		IP              []string  `json:"ip"`
-		CommandLine     string    `json:"commandLine"`
-		Application     string    `json:"application"`
-		WorkDir         string    `json:"workDir"`
-		LogLevel        string    `json:"logLevel"`
-		LogFile         string    `json:"logFile"`
-		ProfilerEnabled bool      `json:"profilerEnabled"`
-		AllocSys        uint64    `json:"allocSys"`
-		HeapSys         uint64    `json:"heapSys"`
-		HeapInuse       uint64    `json:"HeapInuse"`
-		HeapObjects     uint64    `json:"HeapObjects"`
-		StackSys        uint64    `json:"stackSys"`
-		StackInuse      uint64    `json:"StackInuse"`
-		NumCPU          int       `json:"numCPU"`
-		GoMaxProcs      int       `json:"goMaxProcs"`
-		NumGoroutine    int       `json:"numGoroutine"`
-		LoadAvgPeriod   int       `json:"loadAvgPeriod"`
-		Requests        *urlStat  `json:"requests"`
+		StartTime       time.Time                `json:"startTime"`
+		Now             time.Time                `json:"now"`
+		Uptime          int64                    `json:"upTime"`
+		PID             int                      `json:"pid"`
+		User            idDef                    `json:"user"`
+		Group           idDef                    `json:"group"`
+		EffectiveUser   idDef                    `json:"effectiveUser"`
+		EffectiveGroup  idDef                    `json:"effectiveGroup"`
+		Host            string                   `json:"host"`
+		IP              []string                 `json:"ip"`
+		CommandLine     string                   `json:"commandLine"`
+		Application     string                   `json:"application"`
+		WorkDir         string                   `json:"workDir"`
+		LogLevel        string                   `json:"logLevel"`
+		LogFile         string                   `json:"logFile"`
+		ProfilerEnabled bool                     `json:"profilerEnabled"`
+		AllocSys        uint64                   `json:"allocSys"`
+		HeapSys         uint64                   `json:"heapSys"`
+		HeapInuse       uint64                   `json:"HeapInuse"`
+		HeapObjects     uint64                   `json:"HeapObjects"`
+		StackSys        uint64                   `json:"stackSys"`
+		StackInuse      uint64                   `json:"StackInuse"`
+		NumCPU          int                      `json:"numCPU"`
+		GoMaxProcs      int                      `json:"goMaxProcs"`
+		NumGoroutine    int                      `json:"numGoroutine"`
+		LoadAvgPeriod   int                      `json:"loadAvgPeriod"`
+		Requests        *urlStat                 `json:"requests"`
+		Pools           map[string]*bufpool.Stat `json:"pools"`
+		poolsUpdate     map[string]bufpool.GetStatFunc
 	}
 
 	endpointInfo struct {
@@ -141,6 +144,11 @@ func (h *HTTP) initInfo() {
 		GoMaxProcs:    runtime.GOMAXPROCS(-1),
 		LoadAvgPeriod: h.commonConfig.LoadAvgPeriod,
 		Requests:      h.newStat(),
+
+		Pools: map[string]*bufpool.Stat{},
+		poolsUpdate: map[string]bufpool.GetStatFunc{
+			"bufpool": bufpool.GetStat,
+		},
 	}
 
 	cmd := ""
@@ -294,6 +302,12 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	info.Runtime.NumGoroutine = runtime.NumGoroutine()
 	info.Runtime.Requests.update()
 
+	for name, f := range info.Runtime.poolsUpdate {
+		stat := f()
+		stat.InUse = stat.Issued - stat.Released
+		info.Runtime.Pools[name] = stat
+	}
+
 	info.LastLog = log.GetLastLog()
 
 	for _, ep := range info.Endpoints {
@@ -301,6 +315,13 @@ func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.R
 	}
 
 	SendJSON(w, http.StatusOK, info)
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// AddPool --
+func (h *HTTP) AddPool(name string, f bufpool.GetStatFunc) {
+	h.info.Runtime.poolsUpdate[name] = f
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
