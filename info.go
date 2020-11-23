@@ -23,7 +23,7 @@ const url404 = `<<< 404 >>>`
 
 type (
 	infoBlock struct {
-		Application *applicationBlock        `json:"applicaion"`
+		Application *applicationBlock        `json:"application"`
 		Runtime     *runtimeBlock            `json:"runtime"`
 		Endpoints   map[string]*endpointInfo `json:"endpoints"`
 		LastLog     interface{}              `json:"lastLog"`
