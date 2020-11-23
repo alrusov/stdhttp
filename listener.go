@@ -41,7 +41,7 @@ type (
 	ExtraRootItemFunc func() []string
 
 	// StatusFunc --
-	StatusFunc func() (code int, data interface{})
+	StatusFunc func(id uint64, path string, w http.ResponseWriter, r *http.Request)
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -101,8 +101,19 @@ func (h *HTTP) Stop() error {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // SetStatusFunc --
-func (h *HTTP) SetStatusFunc(f StatusFunc) {
+func (h *HTTP) SetStatusFunc(f StatusFunc, paramsInfo string) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	h.statusFunc = f
+
+	if paramsInfo != "" {
+		name := "/status"
+		h.info.Endpoints[name].Description = fmt.Sprintf("%s: %s",
+			strings.Split(h.info.Endpoints[name].Description, ":")[0],
+			paramsInfo,
+		)
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -222,20 +233,18 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case "/status":
-			code := http.StatusNotFound
-			data := interface{}(
+			if h.statusFunc != nil {
+				h.statusFunc(id, path, w, r)
+				return
+			}
+
+			SendJSON(w, http.StatusNotFound,
 				struct {
 					Error string `json:"error"`
 				}{
 					Error: "Not implemented",
 				},
 			)
-
-			if h.statusFunc != nil {
-				code, data = h.statusFunc()
-			}
-
-			SendJSON(w, code, data)
 			return
 		}
 
