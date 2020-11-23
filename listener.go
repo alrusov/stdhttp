@@ -26,6 +26,7 @@ type (
 		srv               *http.Server
 		handler           Handler
 		extraFunc         ExtraInfoFunc
+		statusFunc        StatusFunc
 		info              *infoBlock
 		extraRootItemFunc ExtraRootItemFunc
 		removedPaths      misc.BoolMap
@@ -38,6 +39,9 @@ type (
 
 	// ExtraRootItemFunc --
 	ExtraRootItemFunc func() []string
+
+	// StatusFunc --
+	StatusFunc func() (code int, data interface{})
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -50,6 +54,7 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		mutex:        new(sync.Mutex),
 		handler:      handler,
 		extraFunc:    ExtraInfoFunc(nil),
+		statusFunc:   StatusFunc(nil),
 		info:         &infoBlock{},
 		connectionID: 0,
 		removedPaths: make(misc.BoolMap),
@@ -91,6 +96,13 @@ func (h *HTTP) Start() error {
 func (h *HTTP) Stop() error {
 	misc.StopApp(0)
 	return h.srv.Close()
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// SetStatusFunc --
+func (h *HTTP) SetStatusFunc(f StatusFunc) {
+	h.statusFunc = f
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -209,6 +221,22 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.changeLogLevel(id, path, w, r)
 			return
 
+		case "/status":
+			code := http.StatusNotFound
+			data := interface{}(
+				struct {
+					Error string `json:"error"`
+				}{
+					Error: "Not implemented",
+				},
+			)
+
+			if h.statusFunc != nil {
+				code, data = h.statusFunc()
+			}
+
+			SendJSON(w, code, data)
+			return
 		}
 
 		if h.profiler(id, path, w, r) {
