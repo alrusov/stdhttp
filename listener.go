@@ -3,6 +3,8 @@ package stdhttp
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -189,6 +191,31 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.showConfig(id, path, w, r)
 			return
 
+		case "/debug/build-info":
+			info, ok := debug.ReadBuildInfo()
+			if ok {
+				SendJSON(w, http.StatusNotFound, info)
+				return
+			}
+
+			Error(id, false, w, http.StatusNotImplemented, "Application is built without using modules", nil)
+			return
+
+		case "/debug/env":
+			SendJSON(w, http.StatusNotFound, os.Environ())
+			return
+
+		case "/debug/free-os-memory":
+			debug.FreeOSMemory()
+			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
+			return
+
+		case "/debug/gc-stat":
+			var stat debug.GCStats
+			debug.ReadGCStats(&stat)
+			SendJSON(w, http.StatusNotFound, stat)
+			return
+
 		case "/exit":
 			h.exit(id, path, w, r)
 			return
@@ -237,14 +264,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				h.statusFunc(id, path, w, r)
 				return
 			}
-
-			SendJSON(w, http.StatusNotFound,
-				struct {
-					Error string `json:"error"`
-				}{
-					Error: "Not implemented",
-				},
-			)
+			Error(id, false, w, http.StatusNotImplemented, "Not implemented", nil)
 			return
 		}
 
