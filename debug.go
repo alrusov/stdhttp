@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"strings"
 
@@ -65,6 +66,15 @@ func (h *HTTP) debugFreeOSmem(id uint64, path string, w http.ResponseWriter, r *
 func (h *HTTP) debugGCstat(id uint64, path string, w http.ResponseWriter, r *http.Request) {
 	var stat debug.GCStats
 	debug.ReadGCStats(&stat)
+	SendJSON(w, http.StatusNotFound, stat)
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// memStat --
+func (h *HTTP) debugMemStat(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+	var stat runtime.MemStats
+	runtime.ReadMemStats(&stat)
 	SendJSON(w, http.StatusNotFound, stat)
 }
 

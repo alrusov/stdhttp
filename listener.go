@@ -201,6 +201,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.debugFreeOSmem(id, path, w, r)
 			return
 
+		case "/debug/mem-stat":
+			h.debugMemStat(id, path, w, r)
+			return
+
 		case "/debug/gc-stat":
 			h.debugGCstat(id, path, w, r)
 			return

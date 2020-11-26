@@ -193,6 +193,7 @@ func (h *HTTP) initInfo() {
 		"/debug/env":            "Show environment. Parameters: -",
 		"/debug/free-os-memory": "Try to release an unused memory to the OS. Parameters: -",
 		"/debug/gc-stat":        "Garbage collector statistics. Parameters: -",
+		"/debug/mem-stat":       "Memory statistics. Parameters: -",
 		"/debug/pprof":          "Profiler root. Parameters: -",
 		"/exit":                 "Exit application: pid=<pid>, [code=<code>]",
 		"/favicon.ico":          "favicon.ico. Parameters: -",
