@@ -122,7 +122,8 @@ func (h *HTTP) SetStatusFunc(f StatusFunc, paramsInfo string) {
 func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t0 := misc.NowUTC().UnixNano()
 
-	defer panic.SaveStackToLog()
+	panicID := panic.ID()
+	defer panic.SaveStackToLogEx(panicID)
 
 	id := atomic.AddUint64(&h.connectionID, 1)
 
