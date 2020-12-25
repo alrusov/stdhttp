@@ -7,7 +7,7 @@ var rootPage = `<!DOCTYPE html>
 	<head>
 		<title>{{.Name}}</title>
 		<meta charset="UTF-8" />
-		<link rel="stylesheet" href="/___.css" />
+		<link rel="stylesheet" href="{{$.Prefix}}/___.css" />
 	</head>
 
 	<body>
@@ -24,7 +24,7 @@ var rootPage = `<!DOCTYPE html>
 				</th>
 				{{range $_, $LevelName := $.LogLevelNames}}
 					<td>
-						<a href="/set-log-level?facility={{index $CurrentLogLevel 0}}&amp;level={{$LevelName}}&amp;refresh={{$.ThisPath}}">
+						<a href="{{$.Prefix}}/set-log-level?facility={{index $CurrentLogLevel 0}}&amp;level={{$LevelName}}">
 							{{if eq $LevelName (index $CurrentLogLevel 1)}}{{$.LightOpen}}{{end}}
 							{{$LevelName}}
 							{{if eq $LevelName (index $CurrentLogLevel 1)}}{{$.LightClose}}{{end}}
@@ -37,14 +37,14 @@ var rootPage = `<!DOCTYPE html>
 
 		<h6>Miscellaneous</h6>
 		<ul>
-			<li><a href="/info" target="info">Application info [json]</a></li>
-			<li><a href="/config" target="config">Prepared config [text]</a></li>
+			<li><a href="{{$.Prefix}}/info" target="info">Application info [json]</a></li>
+			<li><a href="{{.Prefix}}/config" target="config">Prepared config [text]</a></li>
 			<li>Profiler is
-				<a href="/profiler-enable?refresh={{$.ThisPath}}">{{if .ProfilerEnabled}}{{$.LightOpen}}{{end}}ENABLED{{if .ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
-				<a href="/profiler-disable?refresh={{$.ThisPath}}">{{if not .ProfilerEnabled}}{{$.LightOpen}}{{end}}DISABLED{{if not .ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
+				<a href="{{$.Prefix}}/profiler-enable">{{if .ProfilerEnabled}}{{$.LightOpen}}{{end}}ENABLED{{if .ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
+				<a href="{{$.Prefix}}/profiler-disable">{{if not .ProfilerEnabled}}{{$.LightOpen}}{{end}}DISABLED{{if not .ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
 			</li>
 			{{if .ProfilerEnabled}}
-				<li><a href="debug/pprof/" target="pprof">Show profiler</a></li>
+				<li><a href="{{$.Prefix}}/debug/pprof/" target="pprof">Show profiler</a></li>
 			{{end}}
 			{{range .Extra}}
 				<li>{{.}}</li>

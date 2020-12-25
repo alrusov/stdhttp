@@ -16,7 +16,7 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // File --
-func (h *HTTP) File(id uint64, path string, w http.ResponseWriter, r *http.Request) (processed bool) {
+func (h *HTTP) File(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (processed bool) {
 	processed = false
 
 	if h.listenerCfg.Root == "" {

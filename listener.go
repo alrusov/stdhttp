@@ -34,14 +34,14 @@ type (
 
 	// Handler --
 	Handler interface {
-		Handler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool
+		Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool
 	}
 
 	// ExtraRootItemFunc --
 	ExtraRootItemFunc func() []string
 
 	// StatusFunc --
-	StatusFunc func(id uint64, path string, w http.ResponseWriter, r *http.Request)
+	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -144,7 +144,14 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	processed := true
 
+	prefix := ""
 	path := misc.NormalizeSlashes(r.URL.Path)
+
+	if strings.HasPrefix(path, h.listenerCfg.ProxyPrefix) {
+		prefix = h.listenerCfg.ProxyPrefix
+		path = path[len(h.listenerCfg.ProxyPrefix):]
+	}
+
 	if path == "" {
 		path = "/"
 	}
@@ -164,11 +171,11 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.listenerCfg.JWTsecret != "" && isPathInList(path, h.listenerCfg.JWTEndpoints) {
-		if !h.jwtAuthHandler(id, path, w, r) {
+		if !h.jwtAuthHandler(id, prefix, path, w, r) {
 			return
 		}
 	} else if h.listenerCfg.BasicAuthEnabled {
-		if !h.basicAuthHandler(id, path, w, r) {
+		if !h.basicAuthHandler(id, prefix, path, w, r) {
 			return
 		}
 	}
@@ -182,52 +189,52 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case "/":
-			w.Header().Add("Location", "/maintenance")
+			w.Header().Add("Location", prefix+"/maintenance")
 			w.WriteHeader(http.StatusPermanentRedirect)
 			return
 
 		case "/config":
-			h.showConfig(id, path, w, r)
+			h.showConfig(id, prefix, path, w, r)
 			return
 
 		case "/debug/build-info":
-			h.debugBuildInfo(id, path, w, r)
+			h.debugBuildInfo(id, prefix, path, w, r)
 			return
 
 		case "/debug/env":
-			h.debugEnv(id, path, w, r)
+			h.debugEnv(id, prefix, path, w, r)
 			return
 
 		case "/debug/free-os-memory":
-			h.debugFreeOSmem(id, path, w, r)
+			h.debugFreeOSmem(id, prefix, path, w, r)
 			return
 
 		case "/debug/mem-stat":
-			h.debugMemStat(id, path, w, r)
+			h.debugMemStat(id, prefix, path, w, r)
 			return
 
 		case "/debug/gc-stat":
-			h.debugGCstat(id, path, w, r)
+			h.debugGCstat(id, prefix, path, w, r)
 			return
 
 		case "/exit":
-			h.exit(id, path, w, r)
+			h.exit(id, prefix, path, w, r)
 			return
 
 		case "/favicon.ico":
-			h.icon(id, path, w, r)
+			h.icon(id, prefix, path, w, r)
 			return
 
 		case "/info":
-			h.showInfo(id, path, w, r)
+			h.showInfo(id, prefix, path, w, r)
 			return
 
 		case "/jwt-login":
-			h.jwtLogin(id, path, w, r)
+			h.jwtLogin(id, prefix, path, w, r)
 			return
 
 		case "/maintenance":
-			h.maintenance(id, path, w, r)
+			h.maintenance(id, prefix, path, w, r)
 			return
 
 		case "/ping":
@@ -241,37 +248,37 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		case "/profiler-disable":
 			h.commonConfig.ProfilerEnabled = false
-			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
+			ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 			return
 
 		case "/profiler-enable":
 			h.commonConfig.ProfilerEnabled = true
-			ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
+			ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 			return
 
 		case "/set-log-level":
-			h.changeLogLevel(id, path, w, r)
+			h.changeLogLevel(id, prefix, path, w, r)
 			return
 
 		case "/status":
 			if h.statusFunc != nil {
-				h.statusFunc(id, path, w, r)
+				h.statusFunc(id, prefix, path, w, r)
 				return
 			}
 			Error(id, false, w, http.StatusNotImplemented, "Not implemented", nil)
 			return
 		}
 
-		if h.profiler(id, path, w, r) {
+		if h.profiler(id, prefix, path, w, r) {
 			return
 		}
 	}
 
-	if h.handler.Handler(id, path, w, r) {
+	if h.handler.Handler(id, prefix, path, w, r) {
 		return
 	}
 
-	if h.File(id, path, w, r) {
+	if h.File(id, prefix, path, w, r) {
 		return
 	}
 

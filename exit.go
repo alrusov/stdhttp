@@ -13,7 +13,7 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // exit --
-func (h *HTTP) exit(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) exit(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 
 	pid, err := strconv.ParseInt(queryParams.Get("pid"), 10, 64)

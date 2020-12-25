@@ -13,7 +13,7 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) jwtAuthHandler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+func (h *HTTP) jwtAuthHandler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
 	return JWTauthHandler(h.listenerCfg, id, path, w, r)
 }
 
@@ -91,7 +91,7 @@ func (c jwtClaims) Valid() error {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) jwtLogin(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+func (h *HTTP) jwtLogin(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
 	return JWTloginHandler(h.listenerCfg, id, path, w, r)
 }
 

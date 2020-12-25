@@ -120,6 +120,11 @@ func Error(id uint64, answerSent bool, w http.ResponseWriter, httpCode int, mess
 // ReturnRefresh --
 func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode int, forceTo string, data []byte, err error) {
 	path := forceTo
+
+	if path == "." {
+		path = r.Referer()
+	}
+
 	if path == "" {
 		path = r.URL.Query().Get("refresh")
 	}
@@ -136,20 +141,28 @@ func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode i
 		if len(data) == 0 {
 			data = []byte(err.Error())
 		}
+
 		Error(id, false, w, httpCode, string(data), err)
 		return
 	}
 
 	p, e := url.Parse(path)
+	if p != nil {
+		q := p.Query()
+		q.Del("___err")
+		p.RawQuery = q.Encode()
+	}
+
 	if e == nil {
 		if err != nil {
-			params := p.Query()
-			params.Set("___err", err.Error())
-			p.RawQuery = params.Encode()
+			q := p.Query()
+			q.Set("___err", err.Error())
+			p.RawQuery = q.Encode()
 			Error(id, true, w, httpCode, string(data), err)
 		}
+
+		path = p.String()
 	}
-	path = p.String()
 
 	w.Header().Set("Location", path)
 	w.WriteHeader(http.StatusSeeOther)

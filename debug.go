@@ -14,7 +14,7 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // debugBuildInfo --
-func (h *HTTP) debugBuildInfo(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) debugBuildInfo(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	info, ok := debug.ReadBuildInfo()
 	if ok {
 		SendJSON(w, http.StatusNotFound, info)
@@ -45,7 +45,7 @@ func init() {
 }
 
 // debugEnv --
-func (h *HTTP) debugEnv(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) debugEnv(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	s := strings.Join(os.Environ(), "\n")
 	WriteContentHeader(w, ContentTypeText)
 	w.WriteHeader(http.StatusOK)
@@ -55,15 +55,15 @@ func (h *HTTP) debugEnv(id uint64, path string, w http.ResponseWriter, r *http.R
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // debugFreeOSmem --
-func (h *HTTP) debugFreeOSmem(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) debugFreeOSmem(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	debug.FreeOSMemory()
-	ReturnRefresh(id, w, r, http.StatusNoContent, "", nil, nil)
+	ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // debugGCstat --
-func (h *HTTP) debugGCstat(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) debugGCstat(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var stat debug.GCStats
 	debug.ReadGCStats(&stat)
 	SendJSON(w, http.StatusNotFound, stat)
@@ -72,7 +72,7 @@ func (h *HTTP) debugGCstat(id uint64, path string, w http.ResponseWriter, r *htt
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // memStat --
-func (h *HTTP) debugMemStat(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) debugMemStat(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var stat runtime.MemStats
 	runtime.ReadMemStats(&stat)
 	SendJSON(w, http.StatusNotFound, stat)

@@ -10,7 +10,7 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) basicAuthHandler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+func (h *HTTP) basicAuthHandler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
 	return BasicAuthHandler(h.listenerCfg, id, path, w, r)
 }
 

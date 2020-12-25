@@ -12,8 +12,8 @@ const (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) profiler(id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
-	if !strings.HasPrefix(r.URL.Path, pprofPrefix) {
+func (h *HTTP) profiler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
+	if !strings.HasPrefix(path, pprofPrefix) {
 		return false
 	}
 
@@ -22,11 +22,12 @@ func (h *HTTP) profiler(id uint64, path string, w http.ResponseWriter, r *http.R
 		return true
 	}
 
+	r.URL.Path = path
 	path = strings.Replace(path, pprofPrefix, "", 1)
+
 	switch path {
 	default:
 		pprof.Index(w, r)
-
 	case "/cmdline":
 		pprof.Cmdline(w, r)
 

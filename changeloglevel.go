@@ -11,7 +11,7 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // changeLogLevel --
-func (h *HTTP) changeLogLevel(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) changeLogLevel(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	queryParams := r.URL.Query()
@@ -30,7 +30,7 @@ func (h *HTTP) changeLogLevel(id uint64, path string, w http.ResponseWriter, r *
 		status = http.StatusBadRequest
 	}
 
-	ReturnRefresh(id, w, r, status, "", nil, err)
+	ReturnRefresh(id, w, r, status, ".", nil, err)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

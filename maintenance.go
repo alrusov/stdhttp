@@ -45,10 +45,11 @@ func (d dblStrArray) Swap(i, j int) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	cfg := config.GetCommon()
 
 	params := struct {
+		Prefix          string
 		ThisPath        string
 		Copyright       string
 		ErrMsg          string
@@ -64,6 +65,7 @@ func (h *HTTP) maintenance(id uint64, path string, w http.ResponseWriter, r *htt
 		LightOpen       template.HTML
 		LightClose      template.HTML
 	}{
+		Prefix:          prefix,
 		ThisPath:        r.URL.Path,
 		Copyright:       misc.Copyright(),
 		ErrMsg:          r.URL.Query().Get("___err"),

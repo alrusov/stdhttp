@@ -9,7 +9,7 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // showConfig --
-func (h *HTTP) showConfig(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) showConfig(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	WriteContentHeader(w, ContentTypeText)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(config.GetSecuredText()))

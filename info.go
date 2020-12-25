@@ -274,7 +274,7 @@ func (h *HTTP) SetExtraInfoFunc(f ExtraInfoFunc) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) showInfo(id uint64, path string, w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) showInfo(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
