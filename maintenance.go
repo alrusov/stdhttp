@@ -80,7 +80,7 @@ func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.Respons
 	params.LightOpen, params.LightClose = h.MenuHighlight()
 
 	if h.extraRootItemFunc != nil {
-		for _, h := range h.extraRootItemFunc() {
+		for _, h := range h.extraRootItemFunc(prefix) {
 			params.Extra = append(params.Extra, template.HTML(h))
 		}
 	}

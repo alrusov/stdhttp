@@ -19,10 +19,10 @@ import (
 type (
 	// HTTP --
 	HTTP struct {
+		mutex             *sync.Mutex
 		connectionID      uint64
 		listenerCfg       *config.Listener
 		commonConfig      *config.Common
-		mutex             *sync.Mutex
 		srv               *http.Server
 		handler           Handler
 		extraFunc         ExtraInfoFunc
@@ -38,7 +38,7 @@ type (
 	}
 
 	// ExtraRootItemFunc --
-	ExtraRootItemFunc func() []string
+	ExtraRootItemFunc func(prefix string) []string
 
 	// StatusFunc --
 	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
@@ -120,7 +120,7 @@ func (h *HTTP) SetStatusFunc(f StatusFunc, paramsInfo string) {
 
 // ServeHTTP --
 func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t0 := misc.NowUTC().UnixNano()
+	t0 := misc.NowUnixNano()
 
 	panicID := panic.ID()
 	defer panic.SaveStackToLogEx(panicID)
