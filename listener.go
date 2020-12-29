@@ -25,6 +25,7 @@ type (
 		commonConfig      *config.Common
 		srv               *http.Server
 		handler           Handler
+		authHandlers      []AuthHandler
 		extraFunc         ExtraInfoFunc
 		statusFunc        StatusFunc
 		info              *infoBlock
@@ -42,7 +43,25 @@ type (
 
 	// StatusFunc --
 	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
+
+	// AuthHandler --
+	AuthHandler func(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool)
 )
+
+var (
+	stdAuthHandlers = []AuthHandler{
+		noAuthHandler,
+		BasicAuthHandler,
+		JWTAuthHandler,
+	}
+)
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+func noAuthHandler(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
+	ok := !cfg.BasicAuthEnabled && cfg.JWTsecret == ""
+	return ok, !ok
+}
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
@@ -53,6 +72,7 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		commonConfig: config.GetCommon(),
 		mutex:        new(sync.Mutex),
 		handler:      handler,
+		authHandlers: stdAuthHandlers,
 		extraFunc:    ExtraInfoFunc(nil),
 		statusFunc:   StatusFunc(nil),
 		info:         &infoBlock{},
@@ -96,6 +116,16 @@ func (h *HTTP) Start() error {
 func (h *HTTP) Stop() error {
 	misc.StopApp(0)
 	return h.srv.Close()
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// SetAuthHandler --
+func (h *HTTP) SetAuthHandler(authHandler AuthHandler) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	h.authHandlers = append([]AuthHandler{authHandler}, stdAuthHandlers...)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -170,12 +200,24 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.listenerCfg.JWTsecret != "" && isPathInList(path, h.listenerCfg.JWTEndpoints) {
-		if !h.jwtAuthHandler(id, prefix, path, w, r) {
-			return
+	if isPathInList(path, h.listenerCfg.AuthEndpoints) {
+		valid := false
+
+		for _, authHandler := range h.authHandlers {
+			tryNext := false
+			valid, tryNext = authHandler(h.listenerCfg, id, prefix, path, w, r)
+			if valid || !tryNext {
+				break
+			}
 		}
-	} else if h.listenerCfg.BasicAuthEnabled {
-		if !h.basicAuthHandler(id, prefix, path, w, r) {
+
+		if !valid {
+			answerSent := false
+			if h.listenerCfg.BasicAuthEnabled {
+				BasicAuthRequest(w, path)
+				answerSent = true
+			}
+			Error(id, answerSent, w, http.StatusForbidden, "Forbidden", nil)
 			return
 		}
 	}

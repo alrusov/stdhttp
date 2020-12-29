@@ -1,7 +1,7 @@
 github.com/alrusov/bufpool v0.1.6 h1:bK+tY3WRPXL1psiX349bvOYfi7j8SgmFVkI+7fQvwoc=
 github.com/alrusov/bufpool v0.1.6/go.mod h1:kHFGm44zeETGWA2h4kUMd0FMkNMiotFERO4AMKPGwwk=
-github.com/alrusov/config v0.1.25 h1:6k22tSST9QUO38JJVhukTckLvBr1UTpDGI3rDjf42S4=
-github.com/alrusov/config v0.1.25/go.mod h1:7AWMAxzT4+k+74sB+MkaUvPiYcWl5M7NhIYxcX8UY7Q=
+github.com/alrusov/config v0.1.26 h1:iaBmgntm2eiy6M3vX1iPY7243Bu26cjCxdA/unUVK5U=
+github.com/alrusov/config v0.1.26/go.mod h1:7AWMAxzT4+k+74sB+MkaUvPiYcWl5M7NhIYxcX8UY7Q=
 github.com/alrusov/jsonw v0.1.0 h1:A4Ymili5ieu7pvtK+s52Ng75qCM6K/Z5h5j9twYyjlk=
 github.com/alrusov/jsonw v0.1.0/go.mod h1:azE1xRu6TOXoMgG42/I/ZMhzfFb5FkUziUlZ4KR4rCs=
 github.com/alrusov/loadavg v0.1.1 h1:zSCgTFTN0qurseOHWUZjEKf0mabjiyNvuCdZxc3UK4o=
@@ -13,8 +13,8 @@ github.com/alrusov/misc v0.1.31/go.mod h1:wq7jkLgy8u0ogF2EyY1Goes9GftiRcK4w1wH1v
 github.com/alrusov/misc v0.1.32 h1:X5IJxAdWmTyFpeXfGpuRCDB/yukn1agSMrWk6ypR+ho=
 github.com/alrusov/misc v0.1.32/go.mod h1:wq7jkLgy8u0ogF2EyY1Goes9GftiRcK4w1wH1vM9JFc=
 github.com/alrusov/panic v0.1.10/go.mod h1:1ffBuXJsSXYDgOopw7l4m60ifDAbmyzDAnq5NIqJLDg=
-github.com/alrusov/panic v0.1.11 h1:zOqShh9fc9fszPW02myBbJFPVwG9RDVeRLCRoDYHvk0=
-github.com/alrusov/panic v0.1.11/go.mod h1:YUUjfxxxjJsTqZUrarhsr4nK4rJ6awY5rGlk8NMk6Y0=
+github.com/alrusov/panic v0.1.12 h1:bk6OuzdQt+rOqO1okoqH7On3RrxTZl911+iC9DUGFik=
+github.com/alrusov/panic v0.1.12/go.mod h1:YUUjfxxxjJsTqZUrarhsr4nK4rJ6awY5rGlk8NMk6Y0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgrijalva/jwt-go v1.0.2 h1:KPldsxuKGsS2FPWsNeg9ZO18aCrGKujPoWXn2yo+KQM=

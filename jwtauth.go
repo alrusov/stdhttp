@@ -13,27 +13,29 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) jwtAuthHandler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
-	return JWTauthHandler(h.listenerCfg, id, path, w, r)
-}
+// JWTAuthHandler --
+func JWTAuthHandler(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
+	if cfg.JWTsecret == "" {
+		return false, true
+	}
 
-// JWTauthHandler --
-func JWTauthHandler(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+	u := ""
+
 	code, msg := func() (code int, msg string) {
-		code = http.StatusForbidden
+		code = http.StatusNoContent
 		msg = ""
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			msg = `Missing authorization header`
 			return
 		}
 
 		s := strings.Split(authHeader, " ")
 		if len(s) != 2 || s[0] != "Bearer" {
-			msg = `Illegal authorization header`
 			return
 		}
+
+		code = http.StatusForbidden
 
 		keyFunc := func(t *jwt.Token) (interface{}, error) {
 			return []byte(cfg.JWTsecret), nil
@@ -53,27 +55,29 @@ func JWTauthHandler(cfg *config.Listener, id uint64, path string, w http.Respons
 			return
 		}
 
-		u, _ := ui.(string)
+		u, _ = ui.(string)
 		_, exists = cfg.Users[u]
 		if !exists {
 			msg = fmt.Sprintf(`Unknown user "%v"`, ui)
 			return
 		}
 
-		code = 0
+		code = http.StatusOK
 		return
 	}()
 
-	if code == 0 {
-		return true
+	if code == http.StatusOK {
+		log.Message(log.DEBUG, `[%d] User %q logged in (JWT)`, id, u)
+		return true, false
 	}
 
-	log.Message(log.INFO, `[%d] Login error: %s`, id, msg)
+	if code == http.StatusNoContent {
+		return false, true
+	}
 
-	w.WriteHeader(code)
-	w.Write([]byte("Forbidden"))
+	log.Message(log.INFO, `[%d] JWT login error: %s`, id, msg)
 
-	return false
+	return false, false
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
