@@ -45,23 +45,13 @@ type (
 	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
 
 	// AuthHandler --
-	AuthHandler func(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool)
-)
-
-var (
-	stdAuthHandlers = []AuthHandler{
-		noAuthHandler,
-		BasicAuthHandler,
-		JWTAuthHandler,
+	AuthHandler interface {
+		Init(cfg *config.Listener)
+		Enabled() bool
+		WWWAuthHeader() (name string, withRealm bool)
+		Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool)
 	}
 )
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
-func noAuthHandler(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
-	ok := !cfg.BasicAuthEnabled && cfg.JWTsecret == ""
-	return ok, !ok
-}
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
@@ -72,12 +62,19 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		commonConfig: config.GetCommon(),
 		mutex:        new(sync.Mutex),
 		handler:      handler,
-		authHandlers: stdAuthHandlers,
+		authHandlers: []AuthHandler{
+			&JWTAuthHandler{},
+			&BasicAuthHandler{},
+		},
 		extraFunc:    ExtraInfoFunc(nil),
 		statusFunc:   StatusFunc(nil),
 		info:         &infoBlock{},
 		connectionID: 0,
 		removedPaths: make(misc.BoolMap),
+	}
+
+	for _, ah := range h.authHandlers {
+		ah.Init(listenerCfg)
 	}
 
 	timeout := time.Duration(listenerCfg.Timeout) * time.Second
@@ -120,12 +117,55 @@ func (h *HTTP) Stop() error {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// SetAuthHandler --
-func (h *HTTP) SetAuthHandler(authHandler AuthHandler) {
+// authEnabled --
+func (h *HTTP) authEnabled() bool {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	h.authHandlers = append([]AuthHandler{authHandler}, stdAuthHandlers...)
+	for _, ah := range h.authHandlers {
+		if ah.Enabled() {
+			return true
+		}
+	}
+
+	return false
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// authRequestHeader --
+func (h *HTTP) authRequestHeader(w http.ResponseWriter, prefix string, path string) {
+	for _, ah := range h.authHandlers {
+		if !ah.Enabled() {
+			continue
+		}
+
+		name, withRealm := ah.WWWAuthHeader()
+		if name == "" {
+			continue
+		}
+
+		s := name
+		if withRealm {
+			s = fmt.Sprintf(`%s realm="%s%s"`, name, prefix, path)
+		}
+
+		w.Header().Add("WWW-Authenticate", s)
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+	w.Write([]byte("Authentication needed"))
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// AddAuthHandler --
+func (h *HTTP) AddAuthHandler(ah AuthHandler) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	ah.Init(h.listenerCfg)
+	h.authHandlers = append([]AuthHandler{ah}, h.authHandlers...)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -200,24 +240,24 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if isPathInList(path, h.listenerCfg.AuthEndpoints) {
+	if h.authEnabled() && isPathInList(path, h.listenerCfg.AuthEndpoints) {
 		valid := false
 
 		for _, authHandler := range h.authHandlers {
+			if !authHandler.Enabled() {
+				continue
+			}
+
 			tryNext := false
-			valid, tryNext = authHandler(h.listenerCfg, id, prefix, path, w, r)
+			valid, tryNext = authHandler.Check(id, prefix, path, w, r)
 			if valid || !tryNext {
 				break
 			}
 		}
 
 		if !valid {
-			answerSent := false
-			if h.listenerCfg.BasicAuthEnabled {
-				BasicAuthRequest(w, path)
-				answerSent = true
-			}
-			Error(id, answerSent, w, http.StatusForbidden, "Forbidden", nil)
+			h.authRequestHeader(w, prefix, path)
+			Error(id, true, w, http.StatusForbidden, "Forbidden", nil)
 			return
 		}
 	}

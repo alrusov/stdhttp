@@ -11,8 +11,30 @@ import (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // BasicAuthHandler --
-func BasicAuthHandler(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
-	if !cfg.BasicAuthEnabled {
+type BasicAuthHandler struct {
+	cfg *config.Listener
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// Init --
+func (ah *BasicAuthHandler) Init(cfg *config.Listener) {
+	ah.cfg = cfg
+}
+
+// Enabled --
+func (ah *BasicAuthHandler) Enabled() bool {
+	return ah.cfg.BasicAuthEnabled
+}
+
+// WWWAuthHeader --
+func (ah *BasicAuthHandler) WWWAuthHeader() (name string, withRealm bool) {
+	return "Basic", true
+}
+
+// Check --
+func (ah *BasicAuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
+	if !ah.cfg.BasicAuthEnabled {
 		return false, true
 	}
 
@@ -21,7 +43,7 @@ func BasicAuthHandler(cfg *config.Listener, id uint64, prefix string, path strin
 		return false, true
 	}
 
-	err := checkBasicLogin(cfg, u, p)
+	err := ah.checkBasicLogin(u, p)
 
 	if err == nil {
 		log.Message(log.DEBUG, `[%d] User %q logged in (Basic)`, id, u)
@@ -35,22 +57,13 @@ func BasicAuthHandler(cfg *config.Listener, id uint64, prefix string, path strin
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func checkBasicLogin(cfg *config.Listener, u string, p string) error {
-	password, exists := cfg.Users[u]
+func (ah *BasicAuthHandler) checkBasicLogin(u string, p string) error {
+	password, exists := ah.cfg.Users[u]
 	if exists && password == p {
 		return nil
 	}
 
 	return fmt.Errorf(`Illegal login or password for "%s"`, u)
-}
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
-// BasicAuthRequest --
-func BasicAuthRequest(w http.ResponseWriter, path string) {
-	w.Header().Set("WWW-Authenticate", "Basic realm="+path+"/")
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte("Authentication needed"))
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

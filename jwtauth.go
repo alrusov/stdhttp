@@ -11,11 +11,31 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+// JWTAuthHandler --
+type JWTAuthHandler struct {
+	cfg *config.Listener
+}
+
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// JWTAuthHandler --
-func JWTAuthHandler(cfg *config.Listener, id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
-	if cfg.JWTsecret == "" {
+// Init --
+func (ah *JWTAuthHandler) Init(cfg *config.Listener) {
+	ah.cfg = cfg
+}
+
+// Enabled --
+func (ah *JWTAuthHandler) Enabled() bool {
+	return ah.cfg.JWTsecret != ""
+}
+
+// WWWAuthHeader --
+func (ah *JWTAuthHandler) WWWAuthHeader() (name string, withRealm bool) {
+	return "Bearer", true
+}
+
+// Check --
+func (ah *JWTAuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
+	if ah.cfg.JWTsecret == "" {
 		return false, true
 	}
 
@@ -38,7 +58,7 @@ func JWTAuthHandler(cfg *config.Listener, id uint64, prefix string, path string,
 		code = http.StatusForbidden
 
 		keyFunc := func(t *jwt.Token) (interface{}, error) {
-			return []byte(cfg.JWTsecret), nil
+			return []byte(ah.cfg.JWTsecret), nil
 		}
 
 		claims := jwt.MapClaims{}
@@ -56,7 +76,7 @@ func JWTAuthHandler(cfg *config.Listener, id uint64, prefix string, path string,
 		}
 
 		u, _ = ui.(string)
-		_, exists = cfg.Users[u]
+		_, exists = ah.cfg.Users[u]
 		if !exists {
 			msg = fmt.Sprintf(`Unknown user "%v"`, ui)
 			return
@@ -96,11 +116,11 @@ func (c jwtClaims) Valid() error {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func (h *HTTP) jwtLogin(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
-	return JWTloginHandler(h.listenerCfg, id, path, w, r)
+	return JWTlogin(h.listenerCfg, id, path, w, r)
 }
 
-// JWTloginHandler --
-func JWTloginHandler(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+// JWTlogin --
+func JWTlogin(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
 	code, msg := func() (code int, msg string) {
 		code = http.StatusForbidden
 		msg = ""
