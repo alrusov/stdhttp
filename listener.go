@@ -12,6 +12,10 @@ import (
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 	"github.com/alrusov/panic"
+	"github.com/alrusov/stdhttp/auth"
+	"github.com/alrusov/stdhttp/auth/basic"
+	"github.com/alrusov/stdhttp/auth/jwt"
+	"github.com/alrusov/stdhttp/auth/krb5"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -25,7 +29,7 @@ type (
 		commonConfig      *config.Common
 		srv               *http.Server
 		handler           Handler
-		authHandlers      []AuthHandler
+		authHandlers      *auth.Handlers
 		extraFunc         ExtraInfoFunc
 		statusFunc        StatusFunc
 		info              *infoBlock
@@ -43,14 +47,6 @@ type (
 
 	// StatusFunc --
 	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
-
-	// AuthHandler --
-	AuthHandler interface {
-		Init(cfg *config.Listener)
-		Enabled() bool
-		WWWAuthHeader() (name string, withRealm bool)
-		Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool)
-	}
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -62,10 +58,7 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		commonConfig: config.GetCommon(),
 		mutex:        new(sync.Mutex),
 		handler:      handler,
-		authHandlers: []AuthHandler{
-			&JWTAuthHandler{},
-			&BasicAuthHandler{},
-		},
+		authHandlers: auth.NewHandlers(),
 		extraFunc:    ExtraInfoFunc(nil),
 		statusFunc:   StatusFunc(nil),
 		info:         &infoBlock{},
@@ -73,8 +66,17 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		removedPaths: make(misc.BoolMap),
 	}
 
-	for _, ah := range h.authHandlers {
-		ah.Init(listenerCfg)
+	stdAuthHandlers := []auth.Handler{
+		&krb5.AuthHandler{},
+		&jwt.AuthHandler{},
+		&basic.AuthHandler{},
+	}
+
+	for _, ah := range stdAuthHandlers {
+		err := h.authHandlers.Add(listenerCfg, ah)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	timeout := time.Duration(listenerCfg.Timeout) * time.Second
@@ -117,55 +119,9 @@ func (h *HTTP) Stop() error {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// authEnabled --
-func (h *HTTP) authEnabled() bool {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	for _, ah := range h.authHandlers {
-		if ah.Enabled() {
-			return true
-		}
-	}
-
-	return false
-}
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
-// authRequestHeader --
-func (h *HTTP) authRequestHeader(w http.ResponseWriter, prefix string, path string) {
-	for _, ah := range h.authHandlers {
-		if !ah.Enabled() {
-			continue
-		}
-
-		name, withRealm := ah.WWWAuthHeader()
-		if name == "" {
-			continue
-		}
-
-		s := name
-		if withRealm {
-			s = fmt.Sprintf(`%s realm="%s%s"`, name, prefix, path)
-		}
-
-		w.Header().Add("WWW-Authenticate", s)
-	}
-
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte("Authentication needed"))
-}
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
 // AddAuthHandler --
-func (h *HTTP) AddAuthHandler(ah AuthHandler) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	ah.Init(h.listenerCfg)
-	h.authHandlers = append([]AuthHandler{ah}, h.authHandlers...)
+func (h *HTTP) AddAuthHandler(ah auth.Handler) (err error) {
+	return h.authHandlers.Add(h.listenerCfg, ah)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -240,25 +196,16 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.authEnabled() && isPathInList(path, h.listenerCfg.AuthEndpoints) {
-		valid := false
-
-		for _, authHandler := range h.authHandlers {
-			if !authHandler.Enabled() {
-				continue
-			}
-
-			tryNext := false
-			valid, tryNext = authHandler.Check(id, prefix, path, w, r)
-			if valid || !tryNext {
-				break
-			}
+	if isPathInList(path, h.listenerCfg.AuthEndpoints) {
+		identity, code, msg := h.authHandlers.Check(id, prefix, path, w, r)
+		if identity == nil && code != 0 {
+			h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
+			Error(id, false, w, code, msg, nil)
+			return
 		}
 
-		if !valid {
-			h.authRequestHeader(w, prefix, path)
-			Error(id, true, w, http.StatusForbidden, "Forbidden", nil)
-			return
+		if identity != nil {
+			log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
 		}
 	}
 
@@ -312,7 +259,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case "/jwt-login":
-			h.jwtLogin(id, prefix, path, w, r)
+			jwt.GetToken(h.listenerCfg, id, path, w, r)
 			return
 
 		case "/maintenance":

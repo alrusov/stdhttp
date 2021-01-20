@@ -1,4 +1,4 @@
-package stdhttp
+package basic
 
 import (
 	"fmt"
@@ -6,58 +6,68 @@ import (
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
+	"github.com/alrusov/stdhttp/auth"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// BasicAuthHandler --
-type BasicAuthHandler struct {
-	cfg *config.Listener
-}
+type (
+	// AuthHandler --
+	AuthHandler struct {
+		cfg *config.Listener
+	}
+)
+
+const method = "Basic"
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // Init --
-func (ah *BasicAuthHandler) Init(cfg *config.Listener) {
+func (ah *AuthHandler) Init(cfg *config.Listener) error {
 	ah.cfg = cfg
+	return nil
 }
 
 // Enabled --
-func (ah *BasicAuthHandler) Enabled() bool {
+func (ah *AuthHandler) Enabled() bool {
 	return ah.cfg.BasicAuthEnabled
 }
 
 // WWWAuthHeader --
-func (ah *BasicAuthHandler) WWWAuthHeader() (name string, withRealm bool) {
-	return "Basic", true
+func (ah *AuthHandler) WWWAuthHeader() (name string, withRealm bool) {
+	return method, true
 }
 
 // Check --
-func (ah *BasicAuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
+func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (identity *auth.Identity, tryNext bool) {
 	if !ah.cfg.BasicAuthEnabled {
-		return false, true
+		return nil, true
 	}
 
 	u, p, ok := r.BasicAuth()
 	if !ok {
-		return false, true
+		return nil, true
 	}
 
 	err := ah.checkBasicLogin(u, p)
 
 	if err == nil {
-		log.Message(log.DEBUG, `[%d] User %q logged in (Basic)`, id, u)
-		return true, false
+		return &auth.Identity{
+				Method: method,
+				User:   u,
+				Extra:  nil,
+			},
+			false
 	}
 
-	log.Message(log.INFO, `[%d] Basic login error: %s`, id, err.Error())
+	log.Message(log.INFO, `[%d] Basic login error: %v`, id, err)
 
-	return false, false
+	return nil, false
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (ah *BasicAuthHandler) checkBasicLogin(u string, p string) error {
+func (ah *AuthHandler) checkBasicLogin(u string, p string) error {
 	password, exists := ah.cfg.Users[u]
 	if exists && password == p {
 		return nil

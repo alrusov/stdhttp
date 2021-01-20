@@ -1,4 +1,4 @@
-package stdhttp
+package jwt
 
 import (
 	"fmt"
@@ -6,37 +6,42 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/alrusov/stdhttp/auth"
 )
 
-// JWTAuthHandler --
-type JWTAuthHandler struct {
+// AuthHandler --
+type AuthHandler struct {
 	cfg *config.Listener
 }
+
+const method = "Bearer"
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // Init --
-func (ah *JWTAuthHandler) Init(cfg *config.Listener) {
+func (ah *AuthHandler) Init(cfg *config.Listener) error {
 	ah.cfg = cfg
+	return nil
 }
 
 // Enabled --
-func (ah *JWTAuthHandler) Enabled() bool {
+func (ah *AuthHandler) Enabled() bool {
 	return ah.cfg.JWTsecret != ""
 }
 
 // WWWAuthHeader --
-func (ah *JWTAuthHandler) WWWAuthHeader() (name string, withRealm bool) {
-	return "Bearer", true
+func (ah *AuthHandler) WWWAuthHeader() (name string, withRealm bool) {
+	return method, true
 }
 
 // Check --
-func (ah *JWTAuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (valid bool, tryNext bool) {
+func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (identity *auth.Identity, tryNext bool) {
 	if ah.cfg.JWTsecret == "" {
-		return false, true
+		return nil, true
 	}
 
 	u := ""
@@ -45,13 +50,8 @@ func (ah *JWTAuthHandler) Check(id uint64, prefix string, path string, w http.Re
 		code = http.StatusNoContent
 		msg = ""
 
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			return
-		}
-
-		s := strings.Split(authHeader, " ")
-		if len(s) != 2 || s[0] != "Bearer" {
+		s := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+		if len(s) != 2 || s[0] != method {
 			return
 		}
 
@@ -87,40 +87,40 @@ func (ah *JWTAuthHandler) Check(id uint64, prefix string, path string, w http.Re
 	}()
 
 	if code == http.StatusOK {
-		log.Message(log.DEBUG, `[%d] User %q logged in (JWT)`, id, u)
-		return true, false
+		return &auth.Identity{
+				Method: method,
+				User:   u,
+				Extra:  nil,
+			},
+			false
 	}
 
 	if code == http.StatusNoContent {
-		return false, true
+		return nil, true
 	}
 
 	log.Message(log.INFO, `[%d] JWT login error: %s`, id, msg)
 
-	return false, false
+	return nil, false
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// jwtClaims --
-type jwtClaims struct {
+// claims --
+type claims struct {
 	User string `json:"username"`
 	Exp  int64  `json:"exp"`
 }
 
 // Valid --
-func (c jwtClaims) Valid() error {
+func (c claims) Valid() error {
 	return nil
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func (h *HTTP) jwtLogin(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool {
-	return JWTlogin(h.listenerCfg, id, path, w, r)
-}
-
-// JWTlogin --
-func JWTlogin(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+// GetToken --
+func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
 	code, msg := func() (code int, msg string) {
 		code = http.StatusForbidden
 		msg = ""
@@ -144,7 +144,7 @@ func JWTlogin(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 			return
 		}
 
-		claims := jwtClaims{
+		claims := claims{
 			User: u,
 			Exp:  time.Now().Add(time.Duration(cfg.JWTlifetime) * time.Second).Unix(),
 		}
