@@ -13,6 +13,7 @@ import (
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
+	"github.com/alrusov/misc"
 	"github.com/alrusov/stdhttp/auth"
 )
 
@@ -21,8 +22,14 @@ import (
 type (
 	// AuthHandler --
 	AuthHandler struct {
-		cfg *config.Listener
-		kt  *keytab.Keytab
+		authCfg *config.Auth
+		cfg     *config.AuthMethod
+		options *methodOptions
+		kt      *keytab.Keytab
+	}
+
+	methodOptions struct {
+		KeyFile string `toml:"key-file"`
 	}
 )
 
@@ -30,33 +37,89 @@ const method = spnego.HTTPHeaderAuthResponseValueKey
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// Init --
-func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
-	ah.cfg = cfg
-	ah.kt = nil
+func init() {
+	config.AddAuthMethod(strings.ToLower(method), &methodOptions{}, checkConfig)
+}
 
-	if cfg.Krb5KeyFile == "" {
+func checkConfig(m *config.AuthMethod) (err error) {
+	msgs := misc.NewMessages()
+
+	options, ok := m.Options.(*methodOptions)
+	if !ok {
+		msgs.Add(`%s.checkConfig: Options is "%T", expected "%T"`, method, m.Options, options)
+	}
+
+	if !m.Enabled {
 		return
 	}
 
-	ah.kt, err = keytab.Load(cfg.Krb5KeyFile)
+	if strings.TrimSpace(options.KeyFile) == "" {
+		msgs.Add(`%s.checkConfig: key-file parameter isn't defined"`, method)
+	}
+
+	options.KeyFile, err = misc.AbsPath(options.KeyFile)
+	if err != nil {
+		return
+	}
+
+	err = msgs.Error()
+	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// Init --
+func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
+	ah.authCfg = nil
+	ah.cfg = nil
+	ah.options = nil
+
+	methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+	if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
+		return nil
+	}
+
+	options, ok := methodCfg.Options.(*methodOptions)
+	if !ok {
+		return fmt.Errorf(`Options for method "%s" is "%T", expected "%T"`, method, methodCfg.Options, options)
+	}
+
+	if options.KeyFile == "" {
+		return fmt.Errorf(`Keyfile for method "%s" cannot be empty`, method)
+	}
+
+	options.KeyFile, err = misc.AbsPath(options.KeyFile)
+	if err != nil {
+		return fmt.Errorf(`Auth method "%s" keyfile: %s`, method, err.Error())
+	}
+
+	ah.kt, err = keytab.Load(options.KeyFile)
 	if err != nil {
 		ah.kt = nil
 		return
 	}
 
-	return
+	ah.authCfg = &cfg.Auth
+	ah.cfg = methodCfg
+	ah.options = options
+	return nil
 }
+
+//----------------------------------------------------------------------------------------------------------------------------//
 
 // Enabled --
 func (ah *AuthHandler) Enabled() bool {
-	return ah.kt != nil
+	return ah.cfg != nil && ah.cfg.Enabled
 }
+
+//----------------------------------------------------------------------------------------------------------------------------//
 
 // WWWAuthHeader --
 func (ah *AuthHandler) WWWAuthHeader() (name string, withRealm bool) {
 	return method, false
 }
+
+//----------------------------------------------------------------------------------------------------------------------------//
 
 // Check --
 func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (identity *auth.Identity, tryNext bool) {

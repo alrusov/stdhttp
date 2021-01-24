@@ -10,37 +10,105 @@ import (
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
+	"github.com/alrusov/misc"
 	"github.com/alrusov/stdhttp/auth"
 )
 
-// AuthHandler --
-type AuthHandler struct {
-	cfg *config.Listener
-}
+//----------------------------------------------------------------------------------------------------------------------------//
+
+type (
+	// AuthHandler --
+	AuthHandler struct {
+		authCfg *config.Auth
+		cfg     *config.AuthMethod
+		options *methodOptions
+	}
+
+	methodOptions struct {
+		Secret   string `toml:"secret"`
+		Lifetime int    `toml:"lifetime"`
+	}
+)
 
 const method = "Bearer"
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+func init() {
+	config.AddAuthMethod(strings.ToLower(method), &methodOptions{}, checkConfig)
+}
+
+func checkConfig(m *config.AuthMethod) (err error) {
+	msgs := misc.NewMessages()
+
+	options, ok := m.Options.(*methodOptions)
+	if !ok {
+		msgs.Add(`%s.checkConfig: Options is "%T", expected "%T"`, method, m.Options, options)
+	}
+
+	if !m.Enabled {
+		return
+	}
+
+	if options.Secret == "" {
+		msgs.Add(`%s.checkConfig: secret parameter isn't defined"`, method)
+	}
+
+	if options.Secret == "" {
+		msgs.Add(`%s.checkConfig: secret parameter isn't defined"`, method)
+	}
+
+	err = msgs.Error()
+	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
 // Init --
-func (ah *AuthHandler) Init(cfg *config.Listener) error {
-	ah.cfg = cfg
+func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
+	ah.authCfg = nil
+	ah.cfg = nil
+	ah.options = nil
+
+	methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+	if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
+		return nil
+	}
+
+	options, ok := methodCfg.Options.(*methodOptions)
+	if !ok {
+		return fmt.Errorf(`Options for method "%s" is "%T", expected "%T"`, method, methodCfg.Options, options)
+	}
+
+	if options.Secret == "" {
+		return fmt.Errorf(`Secret for method "%s" cannot be empty`, method)
+	}
+
+	ah.authCfg = &cfg.Auth
+	ah.cfg = methodCfg
+	ah.options = options
 	return nil
 }
 
+//----------------------------------------------------------------------------------------------------------------------------//
+
 // Enabled --
 func (ah *AuthHandler) Enabled() bool {
-	return ah.cfg.JWTsecret != ""
+	return ah.cfg != nil && ah.cfg.Enabled
 }
+
+//----------------------------------------------------------------------------------------------------------------------------//
 
 // WWWAuthHeader --
 func (ah *AuthHandler) WWWAuthHeader() (name string, withRealm bool) {
-	return method, true
+	return method, false
 }
+
+//----------------------------------------------------------------------------------------------------------------------------//
 
 // Check --
 func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (identity *auth.Identity, tryNext bool) {
-	if ah.cfg.JWTsecret == "" {
+	if ah.options.Secret == "" {
 		return nil, true
 	}
 
@@ -58,7 +126,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		code = http.StatusForbidden
 
 		keyFunc := func(t *jwt.Token) (interface{}, error) {
-			return []byte(ah.cfg.JWTsecret), nil
+			return []byte(ah.options.Secret), nil
 		}
 
 		claims := jwt.MapClaims{}
@@ -76,7 +144,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		}
 
 		u, _ = ui.(string)
-		_, exists = ah.cfg.Users[u]
+		_, exists = ah.authCfg.Users[u]
 		if !exists {
 			msg = fmt.Sprintf(`Unknown user "%v"`, ui)
 			return
@@ -125,8 +193,15 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 		code = http.StatusForbidden
 		msg = ""
 
-		if cfg.JWTsecret == "" {
+		methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+		if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
 			msg = `JWT auth is disabled`
+			return
+		}
+
+		options, ok := methodCfg.Options.(*methodOptions)
+		if !ok || options.Secret == "" {
+			msg = fmt.Sprintf(`Method "%s" is misconfigured`, method)
 			return
 		}
 
@@ -138,7 +213,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 		}
 		p := queryParams.Get("p")
 
-		password, exists := cfg.Users[u]
+		password, exists := cfg.Auth.Users[u]
 		if !exists || password != p {
 			msg = fmt.Sprintf(`Illegal login or password for "%s"`, u)
 			return
@@ -146,12 +221,12 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 
 		claims := claims{
 			User: u,
-			Exp:  time.Now().Add(time.Duration(cfg.JWTlifetime) * time.Second).Unix(),
+			Exp:  time.Now().Add(time.Duration(options.Lifetime) * time.Second).Unix(),
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-		msg, err := token.SignedString([]byte(cfg.JWTsecret))
+		msg, err := token.SignedString([]byte(options.Secret))
 		if err != nil {
 			msg = err.Error()
 			return

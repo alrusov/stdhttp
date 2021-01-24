@@ -196,7 +196,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if isPathInList(path, h.listenerCfg.AuthEndpoints) {
+	if isPathInList(path, h.listenerCfg.Auth.Endpoints) {
 		identity, code, msg := h.authHandlers.Check(id, prefix, path, w, r)
 		if identity == nil && code != 0 {
 			h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
