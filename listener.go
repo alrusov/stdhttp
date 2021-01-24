@@ -292,7 +292,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case "/sha":
 			WriteContentHeader(w, ContentTypeText)
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(r.URL.Query().Get("p")))
+			w.Write(misc.Sha512Hash([]byte(r.URL.Query().Get("p"))))
 			return
 
 		case "/status":
