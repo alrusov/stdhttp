@@ -33,12 +33,15 @@ type (
 	}
 )
 
-const method = spnego.HTTPHeaderAuthResponseValueKey
+const (
+	module = "krb5"
+	method = spnego.HTTPHeaderAuthResponseValueKey
+)
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func init() {
-	config.AddAuthMethod(strings.ToLower(method), &methodOptions{}, checkConfig)
+	config.AddAuthMethod(module, &methodOptions{}, checkConfig)
 }
 
 func checkConfig(m *config.AuthMethod) (err error) {
@@ -46,7 +49,7 @@ func checkConfig(m *config.AuthMethod) (err error) {
 
 	options, ok := m.Options.(*methodOptions)
 	if !ok {
-		msgs.Add(`%s.checkConfig: Options is "%T", expected "%T"`, method, m.Options, options)
+		msgs.Add(`%s.checkConfig: Options is "%T", expected "%T"`, module, m.Options, options)
 	}
 
 	if !m.Enabled {
@@ -54,7 +57,7 @@ func checkConfig(m *config.AuthMethod) (err error) {
 	}
 
 	if strings.TrimSpace(options.KeyFile) == "" {
-		msgs.Add(`%s.checkConfig: key-file parameter isn't defined"`, method)
+		msgs.Add(`%s.checkConfig: key-file parameter isn't defined"`, module)
 	}
 
 	options.KeyFile, err = misc.AbsPath(options.KeyFile)
@@ -74,23 +77,23 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 	ah.cfg = nil
 	ah.options = nil
 
-	methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+	methodCfg, exists := cfg.Auth.Methods[module]
 	if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
 		return nil
 	}
 
 	options, ok := methodCfg.Options.(*methodOptions)
 	if !ok {
-		return fmt.Errorf(`Options for method "%s" is "%T", expected "%T"`, method, methodCfg.Options, options)
+		return fmt.Errorf(`Options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
 	}
 
 	if options.KeyFile == "" {
-		return fmt.Errorf(`Keyfile for method "%s" cannot be empty`, method)
+		return fmt.Errorf(`Keyfile for module "%s" cannot be empty`, module)
 	}
 
 	options.KeyFile, err = misc.AbsPath(options.KeyFile)
 	if err != nil {
-		return fmt.Errorf(`Auth method "%s" keyfile: %s`, method, err.Error())
+		return fmt.Errorf(`Auth module "%s" keyfile: %s`, module, err.Error())
 	}
 
 	ah.kt, err = keytab.Load(options.KeyFile)
@@ -131,7 +134,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 
 	if goIdentity != nil {
 		return &auth.Identity{
-				Method: method,
+				Method: module,
 				User:   goIdentity.UserName(),
 				Extra:  goIdentity,
 			},

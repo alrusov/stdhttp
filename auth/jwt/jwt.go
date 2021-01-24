@@ -30,12 +30,15 @@ type (
 	}
 )
 
-const method = "Bearer"
+const (
+	module = "jwt"
+	method = "Bearer"
+)
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func init() {
-	config.AddAuthMethod(strings.ToLower(method), &methodOptions{}, checkConfig)
+	config.AddAuthMethod(module, &methodOptions{}, checkConfig)
 }
 
 func checkConfig(m *config.AuthMethod) (err error) {
@@ -43,7 +46,7 @@ func checkConfig(m *config.AuthMethod) (err error) {
 
 	options, ok := m.Options.(*methodOptions)
 	if !ok {
-		msgs.Add(`%s.checkConfig: Options is "%T", expected "%T"`, method, m.Options, options)
+		msgs.Add(`%s.checkConfig: Options is "%T", expected "%T"`, module, m.Options, options)
 	}
 
 	if !m.Enabled {
@@ -51,11 +54,11 @@ func checkConfig(m *config.AuthMethod) (err error) {
 	}
 
 	if options.Secret == "" {
-		msgs.Add(`%s.checkConfig: secret parameter isn't defined"`, method)
+		msgs.Add(`%s.checkConfig: secret parameter isn't defined"`, module)
 	}
 
 	if options.Secret == "" {
-		msgs.Add(`%s.checkConfig: secret parameter isn't defined"`, method)
+		msgs.Add(`%s.checkConfig: secret parameter isn't defined"`, module)
 	}
 
 	err = msgs.Error()
@@ -70,18 +73,18 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 	ah.cfg = nil
 	ah.options = nil
 
-	methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+	methodCfg, exists := cfg.Auth.Methods[module]
 	if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
 		return nil
 	}
 
 	options, ok := methodCfg.Options.(*methodOptions)
 	if !ok {
-		return fmt.Errorf(`Options for method "%s" is "%T", expected "%T"`, method, methodCfg.Options, options)
+		return fmt.Errorf(`Options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
 	}
 
 	if options.Secret == "" {
-		return fmt.Errorf(`Secret for method "%s" cannot be empty`, method)
+		return fmt.Errorf(`Secret for module "%s" cannot be empty`, module)
 	}
 
 	ah.authCfg = &cfg.Auth
@@ -156,7 +159,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 
 	if code == http.StatusOK {
 		return &auth.Identity{
-				Method: method,
+				Method: module,
 				User:   u,
 				Extra:  nil,
 			},
@@ -193,7 +196,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 		code = http.StatusForbidden
 		msg = ""
 
-		methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+		methodCfg, exists := cfg.Auth.Methods[module]
 		if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
 			msg = `JWT auth is disabled`
 			return
@@ -201,7 +204,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 
 		options, ok := methodCfg.Options.(*methodOptions)
 		if !ok || options.Secret == "" {
-			msg = fmt.Sprintf(`Method "%s" is misconfigured`, method)
+			msg = fmt.Sprintf(`Method "%s" is misconfigured`, module)
 			return
 		}
 

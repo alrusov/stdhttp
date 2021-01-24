@@ -3,7 +3,6 @@ package basic
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
@@ -25,12 +24,15 @@ type (
 	}
 )
 
-const method = "Basic"
+const (
+	module = "basic"
+	method = "Basic"
+)
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func init() {
-	config.AddAuthMethod(strings.ToLower(method), &methodOptions{}, checkConfig)
+	config.AddAuthMethod(module, &methodOptions{}, checkConfig)
 }
 
 func checkConfig(m *config.AuthMethod) (err error) {
@@ -53,14 +55,14 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 	ah.cfg = nil
 	ah.options = nil
 
-	methodCfg, exists := cfg.Auth.Methods[strings.ToLower(method)]
+	methodCfg, exists := cfg.Auth.Methods[module]
 	if !exists || !methodCfg.Enabled || methodCfg.Options == nil {
 		return nil
 	}
 
 	options, ok := methodCfg.Options.(*methodOptions)
 	if !ok {
-		return fmt.Errorf(`Options for method "%s" is "%T", expected "%T"`, method, methodCfg.Options, options)
+		return fmt.Errorf(`Options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
 	}
 
 	ah.authCfg = &cfg.Auth
@@ -100,7 +102,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 
 	if err == nil {
 		return &auth.Identity{
-				Method: method,
+				Method: module,
 				User:   u,
 				Extra:  nil,
 			},
