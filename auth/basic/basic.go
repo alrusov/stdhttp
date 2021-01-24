@@ -116,7 +116,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 
 func (ah *AuthHandler) checkBasicLogin(u string, p string) error {
 	password, exists := ah.authCfg.Users[u]
-	if exists && password == p {
+	if exists && password == string(misc.Sha512Hash([]byte(p))) {
 		return nil
 	}
 

@@ -217,7 +217,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 		p := queryParams.Get("p")
 
 		password, exists := cfg.Auth.Users[u]
-		if !exists || password != p {
+		if !exists || password != string(misc.Sha512Hash([]byte(p))) {
 			msg = fmt.Sprintf(`Illegal login or password for "%s"`, u)
 			return
 		}

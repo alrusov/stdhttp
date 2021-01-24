@@ -289,6 +289,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.changeLogLevel(id, prefix, path, w, r)
 			return
 
+		case "/sha":
+			WriteContentHeader(w, ContentTypeText)
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(r.URL.Query().Get("p")))
+			return
+
 		case "/status":
 			if h.statusFunc != nil {
 				h.statusFunc(id, prefix, path, w, r)

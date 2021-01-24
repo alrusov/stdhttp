@@ -204,6 +204,7 @@ func (h *HTTP) initInfo() {
 		"/profiler-disable":     "Disable profiler. Parameters: -",
 		"/profiler-enable":      "Enable profiler. Parameters: -",
 		"/set-log-level":        "Temporarily change log level. Parameters: level=<level>",
+		"/sha":                  "Calculate sha512 hash. Parameters: p=<string>",
 		"/status":               "Application current status. Parameters: -",
 	})
 }
