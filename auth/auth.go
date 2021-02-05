@@ -127,6 +127,8 @@ func (hh *Handlers) Check(id uint64, prefix string, path string, permissions mis
 		}
 	}
 
+	identity = nil
+
 	if tryNext {
 		code = http.StatusUnauthorized
 		msg = "Unauthorised"
