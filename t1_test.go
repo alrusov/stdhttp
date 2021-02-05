@@ -6,11 +6,11 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func TestIsEndpointDisabled(t *testing.T) {
+func TestIsPathInList(t *testing.T) {
 	type testData struct {
-		config   map[string]bool
-		path     string
-		disabled bool
+		config map[string]bool
+		path   string
+		inList bool
 	}
 
 	data := []testData{
@@ -19,6 +19,8 @@ func TestIsEndpointDisabled(t *testing.T) {
 		{map[string]bool{"": true}, "", true},
 		{map[string]bool{"": true}, "/aaa", false},
 		{map[string]bool{"*": true}, "/", true},
+		{map[string]bool{"/": true}, "/", true},
+		{map[string]bool{"!/": true}, "/", false},
 		{map[string]bool{"*": true}, "/aaa/bbb", true},
 		{map[string]bool{"/aaa": true}, "/aaa", true},
 		{map[string]bool{"/aaa": true}, "/aaa/bbb", false},
@@ -38,14 +40,18 @@ func TestIsEndpointDisabled(t *testing.T) {
 		{map[string]bool{"/aaa*": true, "!/aaa/bbb": true}, "/aaa", true},
 		{map[string]bool{"/aaa*": true, "!/aaa/bbb": true}, "/aaa/bbb", false},
 		{map[string]bool{"/aaa*": true, "!/aaa/bbb": true}, "/aaa/bbb/ccc", true},
+		{map[string]bool{"/aaa*": true, "!/aaa/bbb*": true}, "/aaa/bbb/ccc", false},
+		{map[string]bool{"/aaa*": true, "!/aaa/bbb/*": true}, "/aaa/bbb/ccc", false},
+		{map[string]bool{"/aaa*": true, "!/aaa/bbb/ccc*": true}, "/aaa/bbb/ccc", false},
+		{map[string]bool{"/aaa*": true, "!/aaa/bbb/ccc/*": true}, "/aaa/bbb/ccc", true},
 	}
 
 	for i, p := range data {
 		i++
 
-		result := isPathInList(p.path, p.config)
-		if result != p.disabled {
-			t.Errorf(`[%d] failed: config "%v", path "%s", result "%v", expected "%v"`, i, p.config, p.path, result, p.disabled)
+		_, exists := isPathInList(p.path, p.config)
+		if exists != p.inList {
+			t.Errorf(`[%d] failed: config "%v", path "%s", result "%v", expected "%v"`, i, p.config, p.path, exists, p.inList)
 		}
 	}
 }

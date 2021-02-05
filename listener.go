@@ -197,13 +197,15 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		misc.LogProcessingTime("", "", id, "http", "", t0)
 	}()
 
-	if isPathInList(path, h.listenerCfg.DisabledEndpoints) {
+	_, exists := isPathInList(path, h.listenerCfg.DisabledEndpoints)
+	if exists {
 		Error(id, false, w, http.StatusLocked, `Endpoint "`+path+`" is disabled`, nil)
 		return
 	}
 
-	if isPathInList(path, h.authEnpointsKeys) {
-		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[path], w, r)
+	authPath, exists := isPathInList(path, h.authEnpointsKeys)
+	if exists {
+		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
 		if identity == nil && code != 0 {
 			h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
 			Error(id, false, w, code, msg, nil)
@@ -331,32 +333,54 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func isPathInList(path string, list misc.BoolMap) bool {
+func isPathInList(path string, list misc.BoolMap) (pattern string, exists bool) {
 	if len(list) == 0 {
-		return false
-	}
-
-	_, exists := list["!"+path]
-	if exists {
-		return false
-	}
-
-	_, exists = list["*"]
-	if exists {
-		return true
+		return
 	}
 
 	_, exists = list[path]
 	if exists {
-		return true
+		pattern = path
+		return
 	}
 
-	_, exists = list[path+"*"]
+	_, exists = list["!"+path]
 	if exists {
-		return true
+		exists = false
+		return
 	}
+
+	iter := 0
 
 	for {
+		iter++
+
+		if iter > 1 {
+			_, exists = list[path+"/*"]
+			if exists {
+				pattern = path + "/*"
+				return
+			}
+
+			_, exists = list["!"+path+"/*"]
+			if exists {
+				exists = false
+				return
+			}
+		}
+
+		_, exists = list[path+"*"]
+		if exists {
+			pattern = path + "*"
+			return
+		}
+
+		_, exists = list["!"+path+"*"]
+		if exists {
+			exists = false
+			return
+		}
+
 		i := strings.LastIndexByte(path, '/')
 		if i < 0 {
 			break
@@ -366,19 +390,15 @@ func isPathInList(path string, list misc.BoolMap) bool {
 		if path == "" {
 			break
 		}
-
-		_, exists = list[path+"/*"]
-		if exists {
-			return true
-		}
-
-		_, exists = list[path+"*"]
-		if exists {
-			return true
-		}
 	}
 
-	return false
+	_, exists = list["*"]
+	if exists {
+		pattern = "*"
+		return
+	}
+
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
