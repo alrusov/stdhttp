@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/alrusov/config"
+	"github.com/alrusov/misc"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -29,6 +30,7 @@ type (
 	Identity struct {
 		Method string
 		User   string
+		Groups []string
 		Extra  interface{}
 	}
 )
@@ -101,7 +103,7 @@ func (hh *Handlers) WriteAuthRequestHeaders(w http.ResponseWriter, prefix string
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // Check --
-func (hh *Handlers) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (identity *Identity, code int, msg string) {
+func (hh *Handlers) Check(id uint64, prefix string, path string, permissions misc.BoolMap, w http.ResponseWriter, r *http.Request) (identity *Identity, code int, msg string) {
 	hh.mutex.RLock()
 	defer hh.mutex.RUnlock()
 
@@ -115,7 +117,8 @@ func (hh *Handlers) Check(id uint64, prefix string, path string, w http.Response
 
 	for _, ah := range hh.list {
 		identity, tryNext = ah.Check(id, prefix, path, w, r)
-		if identity != nil {
+
+		if identity != nil && identity.checkPermissions(permissions) {
 			return
 		}
 
@@ -133,6 +136,37 @@ func (hh *Handlers) Check(id uint64, prefix string, path string, w http.Response
 	code = http.StatusForbidden
 	msg = "Forbidden"
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+func (identity *Identity) checkPermissions(permissions misc.BoolMap) bool {
+	if len(permissions) == 0 {
+		return false
+	}
+
+	user := identity.User
+
+	p, exists := permissions[user]
+	if exists {
+		return p
+	}
+
+	if len(identity.Groups) > 0 {
+		for _, g := range identity.Groups {
+			p, exists := permissions["@"+g]
+			if exists {
+				return p
+			}
+		}
+	}
+
+	p, exists = permissions["*"]
+	if exists {
+		return p
+	}
+
+	return false
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

@@ -29,6 +29,7 @@ type (
 		commonConfig      *config.Common
 		srv               *http.Server
 		handler           Handler
+		authEnpointsKeys  misc.BoolMap
 		authHandlers      *auth.Handlers
 		extraFunc         ExtraInfoFunc
 		statusFunc        StatusFunc
@@ -54,16 +55,21 @@ type (
 // NewListener --
 func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	h := &HTTP{
-		listenerCfg:  listenerCfg,
-		commonConfig: config.GetCommon(),
-		mutex:        new(sync.Mutex),
-		handler:      handler,
-		authHandlers: auth.NewHandlers(),
-		extraFunc:    ExtraInfoFunc(nil),
-		statusFunc:   StatusFunc(nil),
-		info:         &infoBlock{},
-		connectionID: 0,
-		removedPaths: make(misc.BoolMap),
+		listenerCfg:      listenerCfg,
+		commonConfig:     config.GetCommon(),
+		mutex:            new(sync.Mutex),
+		handler:          handler,
+		authEnpointsKeys: make(misc.BoolMap, len(listenerCfg.Auth.Endpoints)),
+		authHandlers:     auth.NewHandlers(),
+		extraFunc:        ExtraInfoFunc(nil),
+		statusFunc:       StatusFunc(nil),
+		info:             &infoBlock{},
+		connectionID:     0,
+		removedPaths:     make(misc.BoolMap),
+	}
+
+	for path := range listenerCfg.Auth.Endpoints {
+		h.authEnpointsKeys[path] = true
 	}
 
 	stdAuthHandlers := []auth.Handler{
@@ -196,8 +202,8 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if isPathInList(path, h.listenerCfg.Auth.Endpoints) {
-		identity, code, msg := h.authHandlers.Check(id, prefix, path, w, r)
+	if isPathInList(path, h.authEnpointsKeys) {
+		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[path], w, r)
 		if identity == nil && code != 0 {
 			h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
 			Error(id, false, w, code, msg, nil)
@@ -325,7 +331,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func isPathInList(path string, list map[string]bool) bool {
+func isPathInList(path string, list misc.BoolMap) bool {
 	if len(list) == 0 {
 		return false
 	}
