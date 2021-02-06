@@ -22,6 +22,7 @@ type (
 	Handler interface {
 		Init(cfg *config.Listener) error
 		Enabled() bool
+		Score() int
 		WWWAuthHeader() (name string, withRealm bool)
 		Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (identity *Identity, tryNext bool)
 	}
@@ -57,11 +58,43 @@ func (hh *Handlers) Add(cfg *config.Listener, ah Handler) (err error) {
 	}
 
 	if ah.Enabled() {
-		hh.list = append(hh.list, ah)
+		hh.add(ah)
 		return
 	}
 
 	return
+}
+
+func (hh *Handlers) add(ah Handler) {
+	ln := len(hh.list)
+
+	if ln == 0 {
+		hh.list = []Handler{ah}
+		return
+	}
+
+	score := ah.Score()
+
+	i := 0
+	for ; i < ln; i++ {
+		if hh.list[i].Score() > score {
+			break
+		}
+	}
+
+	if i == 0 {
+		hh.list = append([]Handler{ah}, hh.list...)
+		return
+	}
+
+	if i == ln {
+		hh.list = append(hh.list, ah)
+		return
+	}
+
+	hh.list = append(hh.list, nil)
+	copy(hh.list[i+1:], hh.list[i:])
+	hh.list[i] = ah
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

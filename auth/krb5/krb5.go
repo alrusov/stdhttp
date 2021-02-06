@@ -117,6 +117,13 @@ func (ah *AuthHandler) Enabled() bool {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+// Score --
+func (ah *AuthHandler) Score() int {
+	return ah.cfg.Score
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
 // WWWAuthHeader --
 func (ah *AuthHandler) WWWAuthHeader() (name string, withRealm bool) {
 	return method, false

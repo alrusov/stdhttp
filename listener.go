@@ -73,9 +73,9 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	}
 
 	stdAuthHandlers := []auth.Handler{
-		&krb5.AuthHandler{},
-		&jwt.AuthHandler{},
 		&basic.AuthHandler{},
+		&jwt.AuthHandler{},
+		&krb5.AuthHandler{},
 	}
 
 	for _, ah := range stdAuthHandlers {
