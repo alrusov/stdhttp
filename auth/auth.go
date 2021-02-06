@@ -155,11 +155,20 @@ func (identity *Identity) checkPermissions(permissions misc.BoolMap) bool {
 	}
 
 	if len(identity.Groups) > 0 {
+		enabled := false
+
 		for _, g := range identity.Groups {
 			p, exists := permissions["@"+g]
 			if exists {
-				return p
+				if !p {
+					return false
+				}
+				enabled = true
 			}
+		}
+
+		if enabled {
+			return true
 		}
 	}
 

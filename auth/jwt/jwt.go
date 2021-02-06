@@ -115,6 +115,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		return nil, true
 	}
 
+	var userDef config.User
 	u := ""
 
 	code, msg := func() (code int, msg string) {
@@ -147,7 +148,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		}
 
 		u, _ = ui.(string)
-		_, exists = ah.authCfg.Users[u]
+		userDef, exists = ah.authCfg.Users[u]
 		if !exists {
 			msg = fmt.Sprintf(`Unknown user "%v"`, ui)
 			return
@@ -161,6 +162,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		return &auth.Identity{
 				Method: module,
 				User:   u,
+				Groups: userDef.Groups,
 				Extra:  nil,
 			},
 			false
@@ -216,8 +218,8 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 		}
 		p := queryParams.Get("p")
 
-		password, exists := cfg.Auth.Users[u]
-		if !exists || password != string(misc.Sha512Hash([]byte(p))) {
+		userDef, exists := cfg.Auth.Users[u]
+		if !exists || userDef.Password != string(misc.Sha512Hash([]byte(p))) {
 			msg = fmt.Sprintf(`Illegal login or password for "%s"`, u)
 			return
 		}

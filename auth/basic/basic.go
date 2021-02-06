@@ -98,29 +98,24 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		return nil, true
 	}
 
-	err := ah.checkBasicLogin(u, p)
-
-	if err == nil {
-		return &auth.Identity{
-				Method: module,
-				User:   u,
-				Extra:  nil,
-			},
-			false
+	userDef, exists := ah.authCfg.Users[u]
+	if !exists {
+		log.Message(log.INFO, `[%d] Basic login error: user "%s" not found`, id, u)
+		return nil, false
 	}
 
-	log.Message(log.INFO, `[%d] Basic login error: %v`, id, err)
-
-	return nil, false
-}
-
-func (ah *AuthHandler) checkBasicLogin(u string, p string) error {
-	password, exists := ah.authCfg.Users[u]
-	if exists && password == string(misc.Sha512Hash([]byte(p))) {
-		return nil
+	if userDef.Password != string(misc.Sha512Hash([]byte(p))) {
+		log.Message(log.INFO, `[%d] Basic login error: illegal password for "%s"`, id, u)
+		return nil, false
 	}
 
-	return fmt.Errorf(`Illegal login or password for "%s"`, u)
+	return &auth.Identity{
+			Method: module,
+			User:   u,
+			Groups: userDef.Groups,
+			Extra:  nil,
+		},
+		false
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

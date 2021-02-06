@@ -2,6 +2,8 @@ github.com/alrusov/bufpool v0.1.6 h1:bK+tY3WRPXL1psiX349bvOYfi7j8SgmFVkI+7fQvwoc
 github.com/alrusov/bufpool v0.1.6/go.mod h1:kHFGm44zeETGWA2h4kUMd0FMkNMiotFERO4AMKPGwwk=
 github.com/alrusov/config v0.1.32 h1:GQ30565CiI5SLSs9jOQeoir+gk5ESXBYzP0EDR03DSc=
 github.com/alrusov/config v0.1.32/go.mod h1:XkEIRMxu98Ajj0PLDCvaTePPhpNtcyC29FJgh04bbKY=
+github.com/alrusov/config v0.1.33 h1:j5RprOqkWrjTTz/ROYadA3CL7q5Sj5/6Nn0je4A/M8A=
+github.com/alrusov/config v0.1.33/go.mod h1:rHMpo+PnGD2vVkgktWsy1A1jWNGuu5BefSsa+NP9TDM=
 github.com/alrusov/jsonw v0.1.0 h1:A4Ymili5ieu7pvtK+s52Ng75qCM6K/Z5h5j9twYyjlk=
 github.com/alrusov/jsonw v0.1.0/go.mod h1:azE1xRu6TOXoMgG42/I/ZMhzfFb5FkUziUlZ4KR4rCs=
 github.com/alrusov/loadavg v0.1.1 h1:zSCgTFTN0qurseOHWUZjEKf0mabjiyNvuCdZxc3UK4o=
@@ -16,6 +18,7 @@ github.com/alrusov/panic v0.1.12 h1:bk6OuzdQt+rOqO1okoqH7On3RrxTZl911+iC9DUGFik=
 github.com/alrusov/panic v0.1.12/go.mod h1:YUUjfxxxjJsTqZUrarhsr4nK4rJ6awY5rGlk8NMk6Y0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dgrijalva/jwt-go v1.0.2 h1:KPldsxuKGsS2FPWsNeg9ZO18aCrGKujPoWXn2yo+KQM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
@@ -25,6 +28,7 @@ github.com/jcmturner/gofork v1.0.0 h1:J7uCkflzTEhUZ64xqKnkDxq3kzc96ajM1Gli5ktUem
 github.com/jcmturner/gofork v1.0.0/go.mod h1:MK8+TM0La+2rjBD4jE12Kj1pCCxK7d2LK/UM3ncEo0o=
 github.com/json-iterator/go v1.1.10 h1:Kz6Cvnvv2wGdaG/V8yMvfkmNiXq9Ya2KUv4rouJJr68=
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
+github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 h1:Esafd1046DLDQ0W1YjYsBW+p8U2u7vzgW2SQVmlNazg=
