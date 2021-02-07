@@ -54,13 +54,13 @@ func TestHandlersAdd(t *testing.T) {
 			},
 		}
 
-		hh := NewHandlers()
+		hh := NewHandlers(cfg)
 
 		for i, score := range scores {
 			name := fmt.Sprintf("test_%d", i)
 			mCfg := &config.AuthMethod{Enabled: true, Score: score}
 			cfg.Auth.Methods[name] = mCfg
-			err := hh.Add(cfg, &testHandler{name: name})
+			err := hh.Add(&testHandler{name: name})
 			if err != nil {
 				t.Fatalf("[%d] %v", testID, err)
 			}

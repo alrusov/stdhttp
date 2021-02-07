@@ -28,7 +28,7 @@ type (
 		listenerCfg       *config.Listener
 		commonConfig      *config.Common
 		srv               *http.Server
-		handler           Handler
+		handlers          []Handler
 		authEnpointsKeys  misc.BoolMap
 		authHandlers      *auth.Handlers
 		extraFunc         ExtraInfoFunc
@@ -58,9 +58,9 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		listenerCfg:      listenerCfg,
 		commonConfig:     config.GetCommon(),
 		mutex:            new(sync.Mutex),
-		handler:          handler,
+		handlers:         []Handler{handler},
 		authEnpointsKeys: make(misc.BoolMap, len(listenerCfg.Auth.Endpoints)),
-		authHandlers:     auth.NewHandlers(),
+		authHandlers:     auth.NewHandlers(listenerCfg),
 		extraFunc:        ExtraInfoFunc(nil),
 		statusFunc:       StatusFunc(nil),
 		info:             &infoBlock{},
@@ -79,7 +79,7 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	}
 
 	for _, ah := range stdAuthHandlers {
-		err := h.authHandlers.Add(listenerCfg, ah)
+		err := h.authHandlers.Add(ah)
 		if err != nil {
 			return nil, err
 		}
@@ -125,9 +125,28 @@ func (h *HTTP) Stop() error {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+// AddHandler --
+func (h *HTTP) AddHandler(handler Handler, toHead bool) {
+	if toHead {
+		h.handlers = append([]Handler{handler}, h.handlers...)
+		return
+	}
+
+	h.handlers = append(h.handlers, handler)
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
 // AddAuthHandler --
 func (h *HTTP) AddAuthHandler(ah auth.Handler) (err error) {
-	return h.authHandlers.Add(h.listenerCfg, ah)
+	return h.authHandlers.Add(ah)
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// AddAuthEndpoint --
+func (h *HTTP) AddAuthEndpoint(endpoint string, permissions misc.BoolMap) {
+	h.listenerCfg.Auth.Endpoints[endpoint] = permissions
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -141,10 +160,12 @@ func (h *HTTP) SetStatusFunc(f StatusFunc, paramsInfo string) {
 
 	if paramsInfo != "" {
 		name := "/status"
-		h.info.Endpoints[name].Description = fmt.Sprintf("%s: %s",
-			strings.Split(h.info.Endpoints[name].Description, ":")[0],
-			paramsInfo,
-		)
+		h.info.Endpoints[name].Description =
+			fmt.Sprintf(
+				"%s: %s",
+				strings.SplitN(h.info.Endpoints[name].Description, ":", 2)[0],
+				paramsInfo,
+			)
 	}
 }
 
@@ -317,8 +338,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if h.handler.Handler(id, prefix, path, w, r) {
-		return
+	for _, handler := range h.handlers {
+		if handler.Handler(id, prefix, path, w, r) {
+			return
+		}
 	}
 
 	if h.File(id, prefix, path, w, r) {

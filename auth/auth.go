@@ -15,6 +15,7 @@ type (
 	// Handlers --
 	Handlers struct {
 		mutex *sync.RWMutex
+		cfg   *config.Listener
 		list  []Handler
 	}
 
@@ -39,20 +40,21 @@ type (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // NewHandlers --
-func NewHandlers() *Handlers {
+func NewHandlers(cfg *config.Listener) *Handlers {
 	return &Handlers{
 		mutex: new(sync.RWMutex),
+		cfg:   cfg,
 	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // Add --
-func (hh *Handlers) Add(cfg *config.Listener, ah Handler) (err error) {
+func (hh *Handlers) Add(ah Handler) (err error) {
 	hh.mutex.Lock()
 	defer hh.mutex.Unlock()
 
-	err = ah.Init(cfg)
+	err = ah.Init(hh.cfg)
 	if err != nil {
 		return
 	}
