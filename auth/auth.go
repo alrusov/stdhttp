@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/alrusov/config"
+	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
 
@@ -35,6 +36,11 @@ type (
 		Groups []string
 		Extra  interface{}
 	}
+)
+
+var (
+	// Log --
+	Log = log.NewFacility("stdhttp.auth")
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//

@@ -139,18 +139,19 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 
 	goIdentity, err := ah.negotiate(r)
 
+	if err != nil {
+		auth.Log.Message(log.INFO, `[%d] Krb5 login error: %v`, id, err)
+		return nil, false
+	}
+
 	if goIdentity != nil {
 		return &auth.Identity{
 				Method: module,
 				User:   goIdentity.UserName(),
+				Groups: goIdentity.AuthzAttributes(),
 				Extra:  goIdentity,
 			},
 			false
-	}
-
-	if err != nil {
-		log.Message(log.INFO, `[%d] Krb5 login error: %v`, id, err)
-		return nil, false
 	}
 
 	return nil, true

@@ -179,7 +179,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		return nil, true
 	}
 
-	log.Message(log.INFO, `[%d] JWT login error: %s`, id, msg)
+	auth.Log.Message(log.INFO, `[%d] JWT login error: %s`, id, msg)
 
 	return nil, false
 }
@@ -253,7 +253,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 		tp = " error"
 	}
 
-	log.Message(log.DEBUG, `[%d] JWT token%s: %s`, id, tp, msg)
+	auth.Log.Message(log.DEBUG, `[%d] JWT token%s: %s`, id, tp, msg)
 
 	w.WriteHeader(code)
 	w.Write([]byte(msg))
