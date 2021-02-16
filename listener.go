@@ -228,8 +228,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if exists {
 		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
 		if identity == nil && code != 0 {
-			h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
-			Error(id, false, w, code, msg, nil)
+			if len(w.Header()) == 0 {
+				h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
+				Error(id, false, w, code, msg, nil)
+			}
 			return
 		}
 
