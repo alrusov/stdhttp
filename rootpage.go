@@ -24,7 +24,7 @@ var rootPage = `<!DOCTYPE html>
 				</th>
 				{{range $_, $LevelName := $.LogLevelNames}}
 					<td>
-						<a href="{{$.Prefix}}/set-log-level?facility={{index $CurrentLogLevel 0}}&amp;level={{$LevelName}}">
+						<a href="{{$.Prefix}}/maintenance/set-log-level?facility={{index $CurrentLogLevel 0}}&amp;level={{$LevelName}}">
 							{{if eq $LevelName (index $CurrentLogLevel 1)}}{{$.LightOpen}}{{end}}
 							{{$LevelName}}
 							{{if eq $LevelName (index $CurrentLogLevel 1)}}{{$.LightClose}}{{end}}
@@ -37,11 +37,11 @@ var rootPage = `<!DOCTYPE html>
 
 		<h6>Miscellaneous</h6>
 		<ul>
-			<li><a href="{{$.Prefix}}/info" target="info">Application info [json]</a></li>
-			<li><a href="{{$.Prefix}}/config" target="config">Prepared config [text]</a></li>
+			<li><a href="{{$.Prefix}}/maintenance/info" target="info">Application info [json]</a></li>
+			<li><a href="{{$.Prefix}}/maintenance/config" target="config">Prepared config [text]</a></li>
 			<li>Profiler is
-				<a href="{{$.Prefix}}/profiler-enable">{{if $.ProfilerEnabled}}{{$.LightOpen}}{{end}}ENABLED{{if $.ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
-				<a href="{{$.Prefix}}/profiler-disable">{{if not $.ProfilerEnabled}}{{$.LightOpen}}{{end}}DISABLED{{if not $.ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
+				<a href="{{$.Prefix}}/maintenance/profiler-enable">{{if $.ProfilerEnabled}}{{$.LightOpen}}{{end}}ENABLED{{if $.ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
+				<a href="{{$.Prefix}}/maintenance/profiler-disable">{{if not $.ProfilerEnabled}}{{$.LightOpen}}{{end}}DISABLED{{if not $.ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
 			</li>
 			{{if $.ProfilerEnabled}}
 				<li><a href="{{$.Prefix}}/debug/pprof/" target="pprof">Show profiler</a></li>

@@ -253,10 +253,6 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusPermanentRedirect)
 			return
 
-		case "/config":
-			h.showConfig(id, prefix, path, w, r)
-			return
-
 		case "/debug/build-info":
 			h.debugBuildInfo(id, prefix, path, w, r)
 			return
@@ -269,61 +265,46 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.debugFreeOSmem(id, prefix, path, w, r)
 			return
 
-		case "/debug/mem-stat":
-			h.debugMemStat(id, prefix, path, w, r)
-			return
-
 		case "/debug/gc-stat":
 			h.debugGCstat(id, prefix, path, w, r)
 			return
 
-		case "/exit":
-			h.exit(id, prefix, path, w, r)
+		case "/debug/mem-stat":
+			h.debugMemStat(id, prefix, path, w, r)
 			return
 
 		case "/favicon.ico":
 			h.icon(id, prefix, path, w, r)
 			return
 
-		case "/info":
-			h.showInfo(id, prefix, path, w, r)
-			return
-
-		case "/jwt-login":
-			jwt.GetToken(h.listenerCfg, id, path, w, r)
-			return
-
 		case "/maintenance":
 			h.maintenance(id, prefix, path, w, r)
 			return
 
-		case "/ping":
-			tags := misc.AppTags()
-			if tags != "" {
-				tags = " " + tags
-			}
-			w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), tags))
-			w.WriteHeader(http.StatusNoContent)
+		case "/maintenance/config":
+			h.showConfig(id, prefix, path, w, r)
 			return
 
-		case "/profiler-disable":
+		case "/maintenance/exit":
+			h.exit(id, prefix, path, w, r)
+			return
+
+		case "/maintenance/info":
+			h.showInfo(id, prefix, path, w, r)
+			return
+
+		case "/maintenance/profiler-disable":
 			h.commonConfig.ProfilerEnabled = false
 			ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 			return
 
-		case "/profiler-enable":
+		case "/maintenance/profiler-enable":
 			h.commonConfig.ProfilerEnabled = true
 			ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 			return
 
-		case "/set-log-level":
+		case "/maintenance/set-log-level":
 			h.changeLogLevel(id, prefix, path, w, r)
-			return
-
-		case "/sha":
-			WriteContentHeader(w, ContentTypeText)
-			w.WriteHeader(http.StatusOK)
-			w.Write(misc.Sha512Hash([]byte(r.URL.Query().Get("p"))))
 			return
 
 		case "/status":
@@ -332,6 +313,25 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			Error(id, false, w, http.StatusNotImplemented, "Not implemented", nil)
+			return
+
+		case "/status/ping":
+			tags := misc.AppTags()
+			if tags != "" {
+				tags = " " + tags
+			}
+			w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), tags))
+			w.WriteHeader(http.StatusNoContent)
+			return
+
+		case "/tools/jwt-login":
+			jwt.GetToken(h.listenerCfg, id, path, w, r)
+			return
+
+		case "/tools/sha":
+			WriteContentHeader(w, ContentTypeText)
+			w.WriteHeader(http.StatusOK)
+			w.Write(misc.Sha512Hash([]byte(r.URL.Query().Get("p"))))
 			return
 		}
 
