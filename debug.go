@@ -57,7 +57,7 @@ func (h *HTTP) debugEnv(id uint64, prefix string, path string, w http.ResponseWr
 // debugFreeOSmem --
 func (h *HTTP) debugFreeOSmem(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	debug.FreeOSMemory()
-	ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
+	ReturnRefresh(id, w, r, http.StatusNoContent, prefix+"/maintenance", nil, nil)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
