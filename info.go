@@ -205,7 +205,7 @@ func (h *HTTP) initInfo() {
 		"/status":                       "Application current status. Parameters: -",
 		"/status/ping":                  "Checking if the application is running. Parameters: -",
 		"/tools/jwt-login":              "Get jwt token. Parameters: u=<username>, p=<password>",
-		"/tools/sha":                    "Calculate sha512 hash. Parameters: p=<string>",
+		"/tools/sha":                    "Calculate hash. Parameters: p=<string>, salt=<string>",
 	})
 }
 

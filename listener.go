@@ -331,7 +331,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case "/tools/sha":
 			WriteContentHeader(w, ContentTypeText)
 			w.WriteHeader(http.StatusOK)
-			w.Write(misc.Sha512Hash([]byte(r.URL.Query().Get("p"))))
+			w.Write(
+				auth.Hash(
+					[]byte(r.URL.Query().Get("p")),
+					[]byte(r.URL.Query().Get("salt")),
+				),
+			)
 			return
 		}
 

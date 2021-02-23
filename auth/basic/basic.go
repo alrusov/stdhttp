@@ -111,7 +111,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 		return nil, false
 	}
 
-	if userDef.Password != string(misc.Sha512Hash([]byte(p))) {
+	if userDef.Password != string(auth.Hash([]byte(p), []byte(u))) {
 		auth.Log.Message(log.INFO, `[%d] Basic login error: illegal password for "%s"`, id, u)
 		return nil, false
 	}
