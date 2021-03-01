@@ -255,6 +255,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 
 	auth.Log.Message(log.DEBUG, `[%d] JWT token%s: %s`, id, tp, msg)
 
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(code)
 	w.Write([]byte(msg))
 

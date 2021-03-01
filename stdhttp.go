@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync/atomic"
 
 	"github.com/alrusov/jsonw"
@@ -24,6 +25,8 @@ const (
 	ContentTypeJSON = "json"
 	// ContentTypeIcon --
 	ContentTypeIcon = "ico"
+	// ContentTypeForm --
+	ContentTypeForm = "form"
 	// ContentTypeBin --
 	ContentTypeBin = "bin"
 
@@ -55,6 +58,7 @@ var (
 		ContentTypeText: "text/plain; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
 		ContentTypeIcon: "image/x-icon",
+		ContentTypeForm: "application/x-www-form-urlencoded",
 		ContentTypeBin:  "application/octet-stream",
 	}
 )
@@ -85,27 +89,25 @@ func WriteContentHeader(w http.ResponseWriter, contentType string) error {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // SendJSON --
-func SendJSON(w http.ResponseWriter, statusCode int, data interface{}) {
+func SendJSON(w http.ResponseWriter, r *http.Request, statusCode int, data interface{}) {
 	m, err := jsonw.Marshal(data)
 	if err != nil {
 		m = []byte(err.Error())
 	}
 
-	WriteContentHeader(w, ContentTypeJSON)
-	w.WriteHeader(statusCode)
-	w.Write(m)
+	WriteReply(w, r, http.StatusOK, ContentTypeJSON, nil, m)
 }
 
 //-----------------------------------------------------------------------------s-----------------------------------------------//
 
 // Error --
-func Error(id uint64, answerSent bool, w http.ResponseWriter, httpCode int, message string, err error) {
+func Error(id uint64, answerSent bool, w http.ResponseWriter, r *http.Request, httpCode int, message string, err error) {
 	if w != nil && !answerSent {
 		type e struct {
 			Message string `json:"error"`
 		}
 		msg := e{Message: message}
-		SendJSON(w, httpCode, msg)
+		SendJSON(w, r, httpCode, msg)
 	}
 
 	s := ""
@@ -142,7 +144,7 @@ func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode i
 			data = []byte(err.Error())
 		}
 
-		Error(id, false, w, httpCode, string(data), err)
+		Error(id, false, w, r, httpCode, string(data), err)
 		return
 	}
 
@@ -158,7 +160,7 @@ func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode i
 			q := p.Query()
 			q.Set("___err", err.Error())
 			p.RawQuery = q.Encode()
-			Error(id, true, w, httpCode, string(data), err)
+			Error(id, true, w, r, httpCode, string(data), err)
 		}
 
 		path = p.String()
@@ -205,16 +207,38 @@ func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err erro
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // WriteReply --
-func WriteReply(w http.ResponseWriter, httpCode int, contentCode string, extraHeaders misc.StringMap, data []byte) (err error) {
+func WriteReply(w http.ResponseWriter, r *http.Request, httpCode int, contentCode string, extraHeaders misc.StringMap, data []byte) (err error) {
 	if len(data) > 0 && (extraHeaders == nil || extraHeaders["Content-Encoding"] == "") && gzipRecommended(data) {
-		var b *bytes.Buffer
-		b, err = misc.GzipPack(bytes.NewReader(data))
-		if err != nil {
-			return err
+		do := false
+
+		if r == nil {
+			do = true
+		} else {
+			for _, s := range r.Header["Accept-Encoding"] {
+				ss := strings.Split(s, ",")
+				for _, v := range ss {
+					switch v {
+					case "*", "gzip":
+						do = true
+						break
+					}
+				}
+				if do {
+					break
+				}
+			}
 		}
 
-		data = b.Bytes()
-		w.Header().Set("Content-Encoding", "gzip")
+		if do {
+			var b *bytes.Buffer
+			b, err = misc.GzipPack(bytes.NewReader(data))
+			if err != nil {
+				return err
+			}
+
+			data = b.Bytes()
+			w.Header().Set("Content-Encoding", "gzip")
+		}
 	}
 
 	if contentCode != "" {

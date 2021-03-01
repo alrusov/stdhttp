@@ -18,7 +18,7 @@ func (h *HTTP) exit(id uint64, prefix string, path string, w http.ResponseWriter
 
 	pid, err := strconv.ParseInt(queryParams.Get("pid"), 10, 64)
 	if err != nil || pid != int64(os.Getpid()) {
-		Error(id, false, w, http.StatusBadRequest, "Illegal pid", err)
+		Error(id, false, w, r, http.StatusBadRequest, "Illegal pid", err)
 		return
 	}
 
@@ -27,7 +27,7 @@ func (h *HTTP) exit(id uint64, prefix string, path string, w http.ResponseWriter
 	if s != "" {
 		code, err = strconv.ParseInt(s, 10, 16)
 		if err != nil {
-			Error(id, false, w, http.StatusBadRequest, "Illegal code", err)
+			Error(id, false, w, r, http.StatusBadRequest, "Illegal code", err)
 			return
 		}
 	}
@@ -45,7 +45,7 @@ func (h *HTTP) exit(id uint64, prefix string, path string, w http.ResponseWriter
 		Text string `json:"text"`
 	}
 
-	SendJSON(w, http.StatusOK,
+	SendJSON(w, r, http.StatusOK,
 		&bye{
 			PID:  pid,
 			Code: code,

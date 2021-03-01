@@ -191,7 +191,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New request %q from %s`, id, r.RequestURI, realIP)
 
 	if !misc.AppStarted() {
-		Error(id, false, w, http.StatusInternalServerError, "Server stopped", nil)
+		Error(id, false, w, r, http.StatusInternalServerError, "Server stopped", nil)
 		return
 	}
 
@@ -220,7 +220,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	_, exists := isPathInList(path, h.listenerCfg.DisabledEndpoints)
 	if exists {
-		Error(id, false, w, http.StatusLocked, `Endpoint "`+path+`" is disabled`, nil)
+		Error(id, false, w, r, http.StatusLocked, `Endpoint "`+path+`" is disabled`, nil)
 		return
 	}
 
@@ -230,7 +230,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if identity == nil && code != 0 {
 			if len(w.Header()) == 0 {
 				h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
-				Error(id, false, w, code, msg, nil)
+				Error(id, false, w, r, code, msg, nil)
 			}
 			return
 		}
@@ -243,9 +243,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !h.IsPathReplaced(path) {
 		switch path {
 		case "/___.css":
-			WriteContentHeader(w, ContentTypeCSS)
-			w.WriteHeader(http.StatusOK)
-			w.Write(css)
+			WriteReply(w, r, http.StatusOK, ContentTypeCSS, nil, css)
 			return
 
 		case "/":
@@ -312,7 +310,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				h.statusFunc(id, prefix, path, w, r)
 				return
 			}
-			Error(id, false, w, http.StatusNotImplemented, "Not implemented", nil)
+			Error(id, false, w, r, http.StatusNotImplemented, "Not implemented", nil)
 			return
 
 		case "/status/ping":
@@ -329,14 +327,11 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case "/tools/sha":
-			WriteContentHeader(w, ContentTypeText)
-			w.WriteHeader(http.StatusOK)
-			w.Write(
-				auth.Hash(
-					[]byte(r.URL.Query().Get("p")),
-					[]byte(r.URL.Query().Get("salt")),
-				),
+			d := auth.Hash(
+				[]byte(r.URL.Query().Get("p")),
+				[]byte(r.URL.Query().Get("salt")),
 			)
+			WriteReply(w, r, http.StatusOK, ContentTypeText, nil, d)
 			return
 		}
 
@@ -356,7 +351,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	processed = false
-	Error(id, false, w, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
+	Error(id, false, w, r, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
 
 	return
 }

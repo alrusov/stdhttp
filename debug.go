@@ -17,11 +17,11 @@ import (
 func (h *HTTP) debugBuildInfo(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	info, ok := debug.ReadBuildInfo()
 	if ok {
-		SendJSON(w, http.StatusNotFound, info)
+		SendJSON(w, r, http.StatusNotFound, info)
 		return
 	}
 
-	Error(id, false, w, http.StatusNotImplemented, "Application is built without using modules", nil)
+	Error(id, false, w, r, http.StatusNotImplemented, "Application is built without using modules", nil)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -47,9 +47,7 @@ func init() {
 // debugEnv --
 func (h *HTTP) debugEnv(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	s := strings.Join(os.Environ(), "\n")
-	WriteContentHeader(w, ContentTypeText)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(replace.Do(s)))
+	WriteReply(w, r, http.StatusOK, ContentTypeText, nil, []byte(replace.Do(s)))
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -66,7 +64,7 @@ func (h *HTTP) debugFreeOSmem(id uint64, prefix string, path string, w http.Resp
 func (h *HTTP) debugGCstat(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var stat debug.GCStats
 	debug.ReadGCStats(&stat)
-	SendJSON(w, http.StatusNotFound, stat)
+	SendJSON(w, r, http.StatusNotFound, stat)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -75,7 +73,7 @@ func (h *HTTP) debugGCstat(id uint64, prefix string, path string, w http.Respons
 func (h *HTTP) debugMemStat(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var stat runtime.MemStats
 	runtime.ReadMemStats(&stat)
-	SendJSON(w, http.StatusNotFound, stat)
+	SendJSON(w, r, http.StatusNotFound, stat)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

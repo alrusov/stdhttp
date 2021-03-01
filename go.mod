@@ -1,6 +1,6 @@
 module github.com/alrusov/stdhttp
 
-go 1.15
+go 1.16
 
 require (
 	github.com/alrusov/bufpool v0.1.7

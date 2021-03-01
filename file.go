@@ -26,13 +26,13 @@ func (h *HTTP) File(id uint64, prefix string, path string, w http.ResponseWriter
 	fn, err := misc.AbsPath(h.listenerCfg.Root + "/" + path)
 	if err != nil {
 		processed = true
-		Error(id, false, w, http.StatusBadRequest, "Bad request", err)
+		Error(id, false, w, r, http.StatusBadRequest, "Bad request", err)
 		return
 	}
 
 	if !strings.HasPrefix(fn, h.listenerCfg.Root) {
 		processed = true
-		Error(id, false, w, http.StatusBadRequest, "Bad request", fmt.Errorf("Hackers path: %s", path))
+		Error(id, false, w, r, http.StatusBadRequest, "Bad request", fmt.Errorf("Hackers path: %s", path))
 		return
 	}
 
@@ -45,7 +45,7 @@ func (h *HTTP) File(id uint64, prefix string, path string, w http.ResponseWriter
 	fd, err := os.Open(fn)
 	if err != nil {
 		processed = true
-		Error(id, false, w, http.StatusInternalServerError, "Server error", err)
+		Error(id, false, w, r, http.StatusInternalServerError, "Server error", err)
 		return
 	}
 	defer fd.Close()

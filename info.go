@@ -322,7 +322,7 @@ func (h *HTTP) showInfo(id uint64, prefix string, path string, w http.ResponseWr
 		ep.Stat.update()
 	}
 
-	SendJSON(w, http.StatusOK, info)
+	SendJSON(w, r, http.StatusOK, info)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

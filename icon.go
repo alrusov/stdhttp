@@ -15,19 +15,19 @@ import (
 // changeLogLevel --
 func (h *HTTP) icon(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	if h.listenerCfg.IconFile == "" {
-		Error(id, false, w, http.StatusNotFound, `No favicon.ico file configured`, nil)
+		Error(id, false, w, r, http.StatusNotFound, `No favicon.ico file configured`, nil)
 		return
 	}
 
 	fn, err := misc.AbsPath(h.listenerCfg.IconFile)
 	if err != nil {
-		Error(id, false, w, http.StatusNotFound, `favicon.ico file not found`, err)
+		Error(id, false, w, r, http.StatusNotFound, `favicon.ico file not found`, err)
 		return
 	}
 
 	fd, err := os.Open(fn)
 	if err != nil {
-		Error(id, false, w, http.StatusNotFound, `favicon.ico file not found`, err)
+		Error(id, false, w, r, http.StatusNotFound, `favicon.ico file not found`, err)
 		return
 	}
 	defer fd.Close()
