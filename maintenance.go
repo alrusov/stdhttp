@@ -3,7 +3,6 @@ package stdhttp
 import (
 	"bytes"
 	"html/template"
-	"io"
 	"net/http"
 	"sort"
 
@@ -111,10 +110,7 @@ func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.Respons
 		}
 	}
 
-	WriteContentHeader(w, ContentTypeHTML)
-	w.WriteHeader(status)
-
-	_, err = io.Copy(w, buf)
+	err = WriteReply(w, r, status, ContentTypeHTML, nil, buf.Bytes())
 	if err != nil {
 		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
 	}
