@@ -95,7 +95,7 @@ func SendJSON(w http.ResponseWriter, r *http.Request, statusCode int, data inter
 		m = []byte(err.Error())
 	}
 
-	WriteReply(w, r, http.StatusOK, ContentTypeJSON, nil, m)
+	WriteReply(w, r, statusCode, ContentTypeJSON, nil, m)
 }
 
 //-----------------------------------------------------------------------------s-----------------------------------------------//

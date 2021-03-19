@@ -62,7 +62,7 @@ func TestHandlersAdd(t *testing.T) {
 			cfg.Auth.Methods[name] = mCfg
 			err := hh.Add(&testHandler{name: name})
 			if err != nil {
-				t.Fatalf("[%d] %v", testID, err)
+				t.Fatalf("[%d] %s", testID, err)
 			}
 		}
 

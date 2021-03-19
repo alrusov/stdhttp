@@ -140,7 +140,7 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 	goIdentity, err := ah.negotiate(r)
 
 	if err != nil {
-		auth.Log.Message(log.INFO, `[%d] Krb5 login error: %v`, id, err)
+		auth.Log.Message(log.INFO, `[%d] Krb5 login error: %s`, id, err)
 		return nil, false
 	}
 
@@ -169,14 +169,14 @@ func (ah *AuthHandler) negotiate(r *http.Request) (identity goidentity.Identity,
 	// Decode the header into an SPNEGO context token
 	b, err := base64.StdEncoding.DecodeString(s[1])
 	if err != nil {
-		err = fmt.Errorf("Error in base64 decoding negotiation header: %v", err)
+		err = fmt.Errorf("Error in base64 decoding negotiation header: %s", err)
 		return
 	}
 
 	var st spnego.SPNEGOToken
 	err = st.Unmarshal(b)
 	if err != nil {
-		err = fmt.Errorf("Error in unmarshaling SPNEGO token: %v", err)
+		err = fmt.Errorf("Error in unmarshaling SPNEGO token: %s", err)
 		return
 	}
 
