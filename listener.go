@@ -435,6 +435,11 @@ func SetLogFilterForRequest(f *misc.Replace) {
 	logReplaceRequest = f
 }
 
+// ConcatLogFilterForRequest --
+func ConcatLogFilterForRequest(f *misc.Replace) {
+	logReplaceRequest.Concat(*f)
+}
+
 // AddLogFilterForRequest --
 func AddLogFilterForRequest(exp string, replace string) error {
 	return logReplaceRequest.Add(exp, replace)

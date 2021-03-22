@@ -8,7 +8,7 @@ require (
 	github.com/alrusov/jsonw v0.1.1
 	github.com/alrusov/loadavg v0.1.2
 	github.com/alrusov/log v0.1.28
-	github.com/alrusov/misc v0.1.35
+	github.com/alrusov/misc v0.1.37
 	github.com/alrusov/panic v0.1.13
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
