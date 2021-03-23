@@ -25,8 +25,9 @@ type (
 	}
 
 	methodOptions struct {
-		Secret   string `toml:"secret"`
-		Lifetime int    `toml:"lifetime"`
+		Secret    string        `toml:"secret"`
+		LifetimeS string        `toml:"lifetime"`
+		Lifetime  time.Duration `toml:"-"`
 	}
 )
 
@@ -85,6 +86,15 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 
 	if options.Secret == "" {
 		return fmt.Errorf(`Secret for module "%s" cannot be empty`, module)
+	}
+
+	options.Lifetime, err = misc.Interval2Duration(options.LifetimeS)
+	if err != nil {
+		return fmt.Errorf(`Lifetime for "%s": %s`, module, err)
+	}
+
+	if options.Lifetime <= 0 {
+		options.Lifetime = config.JWTdefaultLifetime
 	}
 
 	ah.authCfg = &cfg.Auth
@@ -233,7 +243,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 
 		claims := claims{
 			User: u,
-			Exp:  time.Now().Add(time.Duration(options.Lifetime) * time.Second).Unix(),
+			Exp:  time.Now().Add(options.Lifetime).Unix(),
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

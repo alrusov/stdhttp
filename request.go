@@ -55,7 +55,7 @@ func (d *unixSocketDialer) Dial(_ string, path string) (net.Conn, error) {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // Request --
-func Request(method string, uri string, timeout int, opts misc.StringMap, extraHeaders misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
+func Request(method string, uri string, timeout time.Duration, opts misc.StringMap, extraHeaders misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
 	params := url.Values{}
 
 	if data == nil {
@@ -119,8 +119,6 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, extraH
 		timeout = config.ClientDefaultTimeout
 	}
 
-	realTimeout := time.Duration(timeout) * time.Second
-
 	var tr *http.Transport
 	switch req.URL.Scheme {
 	case "http", "https":
@@ -134,8 +132,8 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, extraH
 		tr = &http.Transport{
 			Dial: (&unixSocketDialer{
 				net.Dialer{
-					Timeout:   realTimeout,
-					KeepAlive: realTimeout,
+					Timeout:   timeout,
+					KeepAlive: timeout,
 				},
 			}).Dial,
 		}
@@ -144,7 +142,7 @@ func Request(method string, uri string, timeout int, opts misc.StringMap, extraH
 	}
 
 	clnt := &http.Client{
-		Timeout:   realTimeout,
+		Timeout:   timeout,
 		Transport: tr,
 	}
 

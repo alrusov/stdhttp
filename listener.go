@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
@@ -85,12 +84,11 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		}
 	}
 
-	timeout := time.Duration(listenerCfg.Timeout) * time.Second
 	h.srv = &http.Server{
 		Addr:              listenerCfg.Addr,
 		Handler:           h,
-		ReadTimeout:       timeout,
-		ReadHeaderTimeout: timeout,
+		ReadTimeout:       listenerCfg.Timeout,
+		ReadHeaderTimeout: listenerCfg.Timeout,
 	}
 
 	h.initInfo()

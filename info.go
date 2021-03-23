@@ -74,7 +74,7 @@ type (
 		NumCPU          int               `json:"numCPU"`
 		GoMaxProcs      int               `json:"goMaxProcs"`
 		NumGoroutine    int               `json:"numGoroutine"`
-		LoadAvgPeriod   int               `json:"loadAvgPeriod"`
+		LoadAvgPeriod   time.Duration     `json:"loadAvgPeriod"`
 		Requests        *urlStat          `json:"requests"`
 		Pools           misc.InterfaceMap `json:"pools"`
 		poolsUpdate     map[string]PoolStatFunc
