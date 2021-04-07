@@ -1,7 +1,10 @@
 package stdhttp
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
@@ -188,13 +191,15 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	Log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New %s request "%s" from %s`, id, r.Method, r.RequestURI, realIP)
 	if Log.CurrentLogLevel() >= log.TRACE4 {
-		body, _ := r.GetBody()
-		if body != nil {
-			buf, _, err := ReadData(r.Header, body)
+		body := new(bytes.Buffer)
+		newBody := ioutil.NopCloser(io.TeeReader(r.Body, body))
+		r.Body.Close()
+		r.Body = newBody
+		if body.Len() > 0 {
+			buf, _, err := ReadData(r.Header, ioutil.NopCloser(body))
 			if err == nil && buf.Len() > 0 {
 				Log.Message(log.DEBUG, `[%d] Body: %s`, id, buf.Bytes())
 			}
-			body.Close()
 		}
 	}
 
