@@ -55,7 +55,7 @@ func (h *HTTP) File(id uint64, prefix string, path string, w http.ResponseWriter
 
 	_, err = io.Copy(w, bufio.NewReader(fd))
 	if err != nil {
-		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+		Log.Message(log.DEBUG, "[%d] %s", id, err.Error())
 	}
 
 	processed = true

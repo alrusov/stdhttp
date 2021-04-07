@@ -51,6 +51,9 @@ const (
 )
 
 var (
+	// Log --
+	Log = log.NewFacility("stdhttp")
+
 	// ContentTypes --
 	contentTypes = misc.StringMap{
 		ContentTypeHTML: "text/html; charset=utf-8",
@@ -114,7 +117,7 @@ func Error(id uint64, answerSent bool, w http.ResponseWriter, r *http.Request, h
 	if err != nil {
 		s = " (" + err.Error() + ")"
 	}
-	log.Message(log.DEBUG, `[%d] Reply: %d - "%s"%s`, id, httpCode, message, s)
+	Log.Message(log.DEBUG, `[%d] Reply: %d - "%s"%s`, id, httpCode, message, s)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

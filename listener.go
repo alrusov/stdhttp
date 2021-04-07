@@ -93,7 +93,7 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 
 	h.initInfo()
 
-	log.Message(log.INFO, `Listener created on "%s"`, listenerCfg.Addr)
+	Log.Message(log.INFO, `Listener created on "%s"`, listenerCfg.Addr)
 
 	return h, nil
 }
@@ -186,7 +186,17 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New request %q from %s`, id, r.RequestURI, realIP)
+	Log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New %s request "%s" from %s`, id, r.Method, r.RequestURI, realIP)
+	if Log.CurrentLogLevel() >= log.TRACE4 {
+		body, _ := r.GetBody()
+		if body != nil {
+			buf, _, err := ReadData(r.Header, body)
+			if err == nil && buf.Len() > 0 {
+				Log.Message(log.DEBUG, `[%d] Body: %s`, id, buf.Bytes())
+			}
+			body.Close()
+		}
+	}
 
 	if !misc.AppStarted() {
 		Error(id, false, w, r, http.StatusInternalServerError, "Server stopped", nil)
@@ -213,7 +223,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		h.info.Runtime.Requests.inc()
 		h.updateEndpointStat(path)
-		misc.LogProcessingTime("", "", id, "http", "", t0)
+		misc.LogProcessingTime(Log.Name(), "", id, "listener", "", t0)
 	}()
 
 	_, exists := isPathInList(path, h.listenerCfg.DisabledEndpoints)
@@ -234,7 +244,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if identity != nil {
-			log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
+			Log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
 		}
 	}
 

@@ -36,7 +36,7 @@ func (h *HTTP) icon(id uint64, prefix string, path string, w http.ResponseWriter
 	w.WriteHeader(http.StatusOK)
 	_, err = io.Copy(w, bufio.NewReader(fd))
 	if err != nil {
-		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+		Log.Message(log.DEBUG, "[%d] %s", id, err.Error())
 	}
 }
 

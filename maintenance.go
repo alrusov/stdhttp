@@ -100,19 +100,19 @@ func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.Respons
 	if err != nil {
 		status = http.StatusInternalServerError
 		buf.WriteString(err.Error())
-		log.Message(log.ERR, `[%d] %s`, id, err.Error())
+		Log.Message(log.ERR, `[%d] %s`, id, err.Error())
 	} else {
 		err = t.Execute(buf, params)
 		if err != nil {
 			status = http.StatusInternalServerError
 			buf.WriteString(err.Error())
-			log.Message(log.ERR, `[%d] %s`, id, err.Error())
+			Log.Message(log.ERR, `[%d] %s`, id, err.Error())
 		}
 	}
 
 	err = WriteReply(w, r, status, ContentTypeHTML, nil, buf.Bytes())
 	if err != nil {
-		log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+		Log.Message(log.DEBUG, "[%d] %s", id, err.Error())
 	}
 }
 
