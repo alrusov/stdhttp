@@ -195,7 +195,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		teeReader := io.TeeReader(r.Body, body)
 		data, _, err := ReadData(r.Header, ioutil.NopCloser(teeReader))
 		if err == nil && data.Len() > 0 {
-			Log.Message(log.DEBUG, `[%d] Body: %q`, id, data.Bytes())
+			Log.Message(log.TRACE4, `[%d] Body: %q`, id, data.Bytes())
 		}
 		r.Body = ioutil.NopCloser(body)
 	}
