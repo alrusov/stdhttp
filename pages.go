@@ -2,7 +2,8 @@ package stdhttp
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-var rootPage = `<!DOCTYPE html>
+var (
+	htmlTop = `<!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title>{{$.Name}}</title>
@@ -11,6 +12,13 @@ var rootPage = `<!DOCTYPE html>
 	</head>
 
 	<body>
+`
+	htmlBottom = `
+	</body>
+</html>
+`
+
+	rootPage = htmlTop + `
 		<h4><img src="/favicon.ico" style="width: 16px; height: 16px; position: relative; top: 2px;" alt="" />&nbsp;<em>{{$.Name}} [{{$.App}} {{$.Version}}{{if $.Tags}}&nbsp;{{$.Tags}}{{end}}]</em></h4>
 
 		{{if $.ErrMsg}}<p><strong class="attention">{{$.ErrMsg}}</strong></p>{{end}}
@@ -54,9 +62,19 @@ var rootPage = `<!DOCTYPE html>
 
 		<hr style="margin-top: 15px;" />
 		<p class="top"><small><em>{{$.Copyright}}</em></small></p>
+` + htmlBottom
 
-	</body>
-</html>
-`
+	endpointsPage = htmlTop + `
+		<h1>Endpoint templates</h1>
+		<table class="grd">
+			<tr><th>URL</th><th>Description</th></tr>
+			{{range $_, $info := $.List}}
+				<tr>
+					<td><a href="{{index $info 0}}">{{index $info 0}}</a></td>
+					<td>{{index $info 1}}</td>
+				</tr>
+			{{end}}
+` + htmlBottom
+)
 
 //----------------------------------------------------------------------------------------------------------------------------//

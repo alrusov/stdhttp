@@ -253,7 +253,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !h.IsPathReplaced(path) {
 		switch path {
 		case "/___.css":
-			WriteReply(w, r, http.StatusOK, ContentTypeCSS, nil, css)
+			err := WriteReply(w, r, http.StatusOK, ContentTypeCSS, nil, css)
+			if err != nil {
+				Log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+			}
 			return
 
 		case "/":
@@ -345,7 +348,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				[]byte(r.URL.Query().Get("p")),
 				[]byte(r.URL.Query().Get("salt")),
 			)
-			WriteReply(w, r, http.StatusOK, ContentTypeText, nil, d)
+			err := WriteReply(w, r, http.StatusOK, ContentTypeText, nil, d)
+			if err != nil {
+				Log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+			}
 			return
 		}
 

@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 )
 
@@ -47,7 +48,10 @@ func init() {
 // debugEnv --
 func (h *HTTP) debugEnv(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	s := strings.Join(os.Environ(), "\n")
-	WriteReply(w, r, http.StatusOK, ContentTypeText, nil, []byte(replace.Do(s)))
+	err := WriteReply(w, r, http.StatusOK, ContentTypeText, nil, []byte(replace.Do(s)))
+	if err != nil {
+		Log.Message(log.DEBUG, "[%d] %s", id, err.Error())
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
