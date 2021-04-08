@@ -197,6 +197,7 @@ func (h *HTTP) initInfo() {
 		"/favicon.ico":                  "favicon.ico. Parameters: -",
 		"/maintenance":                  "Application maintenance page. Parameters: -",
 		"/maintenance/config":           "Get app config (secured). Parameters: -",
+		"/maintenance/endpoints":        "Known endpoints. Parameters: -",
 		"/maintenance/exit":             "Exit application: pid=<pid>, [code=<code>]",
 		"/maintenance/info":             "Get app information. Parameters: -",
 		"/maintenance/profiler-disable": "Disable profiler. Parameters: -",

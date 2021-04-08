@@ -39,6 +39,7 @@ var rootPage = `<!DOCTYPE html>
 		<ul>
 			<li><a href="{{$.Prefix}}/maintenance/info" target="info">Application info [json]</a></li>
 			<li><a href="{{$.Prefix}}/maintenance/config" target="config">Prepared config [text]</a></li>
+			<li><a href="{{$.Prefix}}/maintenance/endpoints" target="endpoints">Known endpoints</a></li>
 			<li>Profiler is
 				<a href="{{$.Prefix}}/maintenance/profiler-enable">{{if $.ProfilerEnabled}}{{$.LightOpen}}{{end}}ENABLED{{if $.ProfilerEnabled}}{{$.LightClose}}{{end}}</a>
 				<a href="{{$.Prefix}}/maintenance/profiler-disable">{{if not $.ProfilerEnabled}}{{$.LightOpen}}{{end}}DISABLED{{if not $.ProfilerEnabled}}{{$.LightClose}}{{end}}</a>

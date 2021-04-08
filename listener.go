@@ -31,7 +31,7 @@ type (
 		commonConfig      *config.Common
 		srv               *http.Server
 		handlers          []Handler
-		authEnpointsKeys  misc.BoolMap
+		authEndpointsKeys misc.BoolMap
 		authHandlers      *auth.Handlers
 		extraFunc         ExtraInfoFunc
 		statusFunc        StatusFunc
@@ -57,21 +57,21 @@ type (
 // NewListener --
 func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	h := &HTTP{
-		listenerCfg:      listenerCfg,
-		commonConfig:     config.GetCommon(),
-		mutex:            new(sync.Mutex),
-		handlers:         []Handler{handler},
-		authEnpointsKeys: make(misc.BoolMap, len(listenerCfg.Auth.Endpoints)),
-		authHandlers:     auth.NewHandlers(listenerCfg),
-		extraFunc:        ExtraInfoFunc(nil),
-		statusFunc:       StatusFunc(nil),
-		info:             &infoBlock{},
-		connectionID:     0,
-		removedPaths:     make(misc.BoolMap),
+		listenerCfg:       listenerCfg,
+		commonConfig:      config.GetCommon(),
+		mutex:             new(sync.Mutex),
+		handlers:          []Handler{handler},
+		authEndpointsKeys: make(misc.BoolMap, len(listenerCfg.Auth.Endpoints)),
+		authHandlers:      auth.NewHandlers(listenerCfg),
+		extraFunc:         ExtraInfoFunc(nil),
+		statusFunc:        StatusFunc(nil),
+		info:              &infoBlock{},
+		connectionID:      0,
+		removedPaths:      make(misc.BoolMap),
 	}
 
 	for path := range listenerCfg.Auth.Endpoints {
-		h.authEnpointsKeys[path] = true
+		h.authEndpointsKeys[path] = true
 	}
 
 	stdAuthHandlers := []auth.Handler{
@@ -234,7 +234,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authPath, exists := isPathInList(path, h.authEnpointsKeys)
+	authPath, exists := isPathInList(path, h.authEndpointsKeys)
 	if exists {
 		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
 		if identity == nil && code != 0 {
@@ -291,6 +291,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		case "/maintenance/config":
 			h.showConfig(id, prefix, path, w, r)
+			return
+
+		case "/maintenance/endpoints":
+			h.endpoints(id, prefix, path, w, r)
 			return
 
 		case "/maintenance/exit":
