@@ -65,7 +65,7 @@ var (
 ` + htmlBottom
 
 	endpointsPage = htmlTop + `
-		<h1>Endpoint templates</h1>
+		<h6>Known endpoints</h6>
 		<table class="grd">
 			<tr><th>URL</th><th>Description</th></tr>
 			{{range $_, $info := $.List}}
