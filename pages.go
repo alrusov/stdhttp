@@ -70,7 +70,7 @@ var (
 			<tr><th>URL</th><th>Description</th></tr>
 			{{range $_, $info := $.List}}
 				<tr>
-					<td><a href="{{index $info 0}}">{{index $info 0}}</a></td>
+					<td><a href="{{$.Prefix}}{{index $info 0}}">{{index $info 0}}</a></td>
 					<td>{{index $info 1}}</td>
 				</tr>
 			{{end}}
