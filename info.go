@@ -19,7 +19,7 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-const url404 = `<<< 404 >>>`
+const url404 = `/errors/404`
 
 type (
 	infoBlock struct {
@@ -67,10 +67,10 @@ type (
 		ProfilerEnabled bool              `json:"profilerEnabled"`
 		AllocSys        uint64            `json:"allocSys"`
 		HeapSys         uint64            `json:"heapSys"`
-		HeapInuse       uint64            `json:"HeapInuse"`
-		HeapObjects     uint64            `json:"HeapObjects"`
+		HeapInuse       uint64            `json:"heapInuse"`
+		HeapObjects     uint64            `json:"heapObjects"`
 		StackSys        uint64            `json:"stackSys"`
-		StackInuse      uint64            `json:"StackInuse"`
+		StackInuse      uint64            `json:"stackInuse"`
 		NumCPU          int               `json:"numCPU"`
 		GoMaxProcs      int               `json:"goMaxProcs"`
 		NumGoroutine    int               `json:"numGoroutine"`
