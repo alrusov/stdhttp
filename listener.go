@@ -2,6 +2,7 @@ package stdhttp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -50,6 +51,12 @@ type (
 
 	// StatusFunc --
 	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
+
+	contextKey string
+)
+
+const (
+	CtxIdentity = contextKey("identity")
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -247,6 +254,8 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if identity != nil {
 			Log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
+			ctx := context.WithValue(r.Context(), CtxIdentity, identity)
+			r = r.WithContext(ctx)
 		}
 	}
 
@@ -490,6 +499,28 @@ func (h *HTTP) IsPathReplaced(path string) bool {
 
 	_, exists := h.removedPaths[path]
 	return exists
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// GetValueFromContext --
+func (h *HTTP) GetValueFromContext(r *http.Request, key interface{}) (value interface{}) {
+	return r.Context().Value(key)
+}
+
+func (h *HTTP) GetIdentityFromContext(r *http.Request) (identity *auth.Identity, err error) {
+	iface := h.GetValueFromContext(r, CtxIdentity)
+	if iface == nil {
+		return
+	}
+
+	identity, ok := iface.(*auth.Identity)
+	if !ok {
+		err = fmt.Errorf(`value of the "%s" in context is %T, expected %T`, CtxIdentity, iface, identity)
+		return
+	}
+
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
