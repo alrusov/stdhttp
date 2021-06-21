@@ -52,11 +52,12 @@ type (
 	// StatusFunc --
 	StatusFunc func(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request)
 
-	contextKey string
+	// ContextKey --
+	ContextKey string
 )
 
 const (
-	CtxIdentity = contextKey("identity")
+	CtxIdentity = ContextKey("identity")
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -254,8 +255,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if identity != nil {
 			Log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
-			ctx := context.WithValue(r.Context(), CtxIdentity, identity)
-			r = r.WithContext(ctx)
+			r = AddValueToRequestContext(r, CtxIdentity, identity)
 		}
 	}
 
@@ -503,13 +503,19 @@ func (h *HTTP) IsPathReplaced(path string) bool {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// GetValueFromContext --
-func (h *HTTP) GetValueFromContext(r *http.Request, key interface{}) (value interface{}) {
+// AddValueToRequestContext --
+func AddValueToRequestContext(r *http.Request, key interface{}, value interface{}) (newR *http.Request) {
+	ctx := context.WithValue(r.Context(), key, value)
+	return r.WithContext(ctx)
+}
+
+// GetValueFromRequestContext --
+func GetValueFromRequestContext(r *http.Request, key interface{}) (value interface{}) {
 	return r.Context().Value(key)
 }
 
-func (h *HTTP) GetIdentityFromContext(r *http.Request) (identity *auth.Identity, err error) {
-	iface := h.GetValueFromContext(r, CtxIdentity)
+func GetIdentityFromRequestContext(r *http.Request) (identity *auth.Identity, err error) {
+	iface := GetValueFromRequestContext(r, CtxIdentity)
 	if iface == nil {
 		return
 	}

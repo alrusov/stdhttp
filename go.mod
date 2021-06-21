@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/alrusov/bufpool v0.1.7
-	github.com/alrusov/config v0.1.40
+	github.com/alrusov/config v0.1.41
 	github.com/alrusov/jsonw v0.1.1
 	github.com/alrusov/loadavg v0.1.4
 	github.com/alrusov/log v0.1.30
@@ -13,7 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	gopkg.in/jcmturner/aescts.v1 v1.0.1 // indirect
 	gopkg.in/jcmturner/dnsutils.v1 v1.0.1 // indirect
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0
