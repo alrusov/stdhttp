@@ -2,6 +2,8 @@ package stdhttp
 
 import (
 	"bytes"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -48,6 +50,9 @@ const (
 	MethodTRACE = "TRACE"
 	// MethodPATCH --
 	MethodPATCH = "PATCH"
+
+	// HTTPheaderHash --
+	HTTPheaderHash = "X-Hash"
 )
 
 var (
@@ -299,6 +304,38 @@ func gzipRecommended(data []byte) bool {
 
 	minSize := int(atomic.LoadInt32(&minSizeForGzip))
 	return minSize >= 0 && ln >= minSize
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// JSONResultWithDataHash --
+func JSONResultWithDataHash(data interface{}, useHash bool, hash string, srcHeaders misc.StringMap) (result []byte, code int, headers misc.StringMap, err error) {
+	headers = srcHeaders
+
+	j, err := jsonw.Marshal(data)
+	if err != nil {
+		code = http.StatusInternalServerError
+		return
+	}
+
+	if useHash {
+		if headers == nil {
+			headers = make(misc.StringMap, 1)
+		}
+
+		sha := sha512.Sum512(j)
+		newHash := hex.EncodeToString(sha[:])
+		headers[HTTPheaderHash] = newHash
+
+		if newHash == hash {
+			code = http.StatusNoContent
+			return
+		}
+	}
+
+	result = j
+	code = http.StatusOK
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

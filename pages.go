@@ -23,7 +23,7 @@ var (
 
 		{{if $.ErrMsg}}<p><strong class="attention">{{$.ErrMsg}}</strong></p>{{end}}
 
-		<h6>Logging level</h6>
+		<h6>Logging levels</h6>
 		<table class="grd">
 		{{range $_, $CurrentLogLevel := $.LogLevels}}
 			<tr>
