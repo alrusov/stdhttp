@@ -30,7 +30,7 @@ func (h *HTTP) changeLogLevel(id uint64, prefix string, path string, w http.Resp
 		status = http.StatusBadRequest
 	}
 
-	ReturnRefresh(id, w, r, status, prefix+"/maintenance", nil, err)
+	ReturnRefresh(id, w, r, status, ".", nil, err)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

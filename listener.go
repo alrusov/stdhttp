@@ -319,12 +319,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		case "/maintenance/profiler-disable":
 			h.commonConfig.ProfilerEnabled = false
-			ReturnRefresh(id, w, r, http.StatusNoContent, prefix+"/maintenance", nil, nil)
+			ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 			return
 
 		case "/maintenance/profiler-enable":
 			h.commonConfig.ProfilerEnabled = true
-			ReturnRefresh(id, w, r, http.StatusNoContent, prefix+"/maintenance", nil, nil)
+			ReturnRefresh(id, w, r, http.StatusNoContent, ".", nil, nil)
 			return
 
 		case "/maintenance/set-log-level":
