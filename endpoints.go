@@ -15,10 +15,12 @@ func (h *HTTP) endpoints(id uint64, prefix string, path string, w http.ResponseW
 	params := struct {
 		Prefix string
 		Name   string
+		ErrMsg string
 		List   dblStrArray
 	}{
 		Prefix: prefix,
 		Name:   "Known endpoints",
+		ErrMsg: r.URL.Query().Get("___err"),
 		List:   make(dblStrArray, 0, len(h.info.Endpoints)),
 	}
 

@@ -65,6 +65,8 @@ var (
 ` + htmlBottom
 
 	endpointsPage = htmlTop + `
+		{{if $.ErrMsg}}<p><strong class="attention">{{$.ErrMsg}}</strong></p>{{end}}
+
 		<h6>Known endpoints</h6>
 		<table class="grd">
 			<tr><th>URL</th><th>Description</th></tr>
