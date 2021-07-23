@@ -380,9 +380,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	processed = false
-	Error(id, false, w, r, http.StatusNotFound, `Invalid endpoint "`+path+`"`, nil)
-
-	return
+	Error(id, false, w, r, http.StatusNotFound, fmt.Sprintf(`Invalid endpoint "%s"`, path), nil)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

@@ -67,23 +67,21 @@ func Request(method string, uri string, timeout time.Duration, opts misc.StringM
 	user := ""
 	password := ""
 
-	if opts != nil {
-		for k, v := range opts {
-			if strings.HasPrefix(k, ".") {
-				switch k {
-				case RequestOptionGzip:
-					withGzip = withGzip && parseBoolOption(v)
-				case RequestOptionSkipTLSVerification:
-					skipTLSverification = parseBoolOption(v)
-				case RequestOptionBasicAuthUser:
-					user = v
-				case RequestOptionBasicAuthPassword:
-					password = v
-				}
-				continue
+	for k, v := range opts {
+		if strings.HasPrefix(k, ".") {
+			switch k {
+			case RequestOptionGzip:
+				withGzip = withGzip && parseBoolOption(v)
+			case RequestOptionSkipTLSVerification:
+				skipTLSverification = parseBoolOption(v)
+			case RequestOptionBasicAuthUser:
+				user = v
+			case RequestOptionBasicAuthPassword:
+				password = v
 			}
-			params.Set(k, v)
+			continue
 		}
+		params.Set(k, v)
 	}
 
 	if withGzip {
@@ -103,10 +101,8 @@ func Request(method string, uri string, timeout time.Duration, opts misc.StringM
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
-	if extraHeaders != nil {
-		for n, v := range extraHeaders {
-			req.Header.Set(n, v)
-		}
+	for n, v := range extraHeaders {
+		req.Header.Set(n, v)
 	}
 
 	if user != "" || password != "" {
@@ -138,7 +134,7 @@ func Request(method string, uri string, timeout time.Duration, opts misc.StringM
 			}).Dial,
 		}
 	default:
-		return nil, nil, fmt.Errorf(`Unknown scheme "%s"`, req.URL.Scheme)
+		return nil, nil, fmt.Errorf(`unknown scheme "%s"`, req.URL.Scheme)
 	}
 
 	clnt := &http.Client{

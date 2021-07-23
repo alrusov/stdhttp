@@ -77,7 +77,7 @@ var (
 func ContentHeader(contentType string) (string, error) {
 	h, exists := contentTypes[contentType]
 	if !exists {
-		return "", fmt.Errorf(`Illegal content code "%s"`, contentType)
+		return "", fmt.Errorf(`illegal content code "%s"`, contentType)
 	}
 
 	return h, nil
@@ -223,14 +223,17 @@ func WriteReply(w http.ResponseWriter, r *http.Request, httpCode int, contentCod
 			do = true
 		} else {
 			for _, s := range r.Header["Accept-Encoding"] {
-				ss := strings.Split(s, ",")
-				for _, v := range ss {
-					switch v {
-					case "*", "gzip":
-						do = true
-						break
+				func() {
+					ss := strings.Split(s, ",")
+					for _, v := range ss {
+						switch v {
+						case "*", "gzip":
+							do = true
+							return
+						}
 					}
-				}
+				}()
+
 				if do {
 					break
 				}
@@ -253,10 +256,8 @@ func WriteReply(w http.ResponseWriter, r *http.Request, httpCode int, contentCod
 		WriteContentHeader(w, contentCode)
 	}
 
-	if extraHeaders != nil {
-		for n, v := range extraHeaders {
-			w.Header().Set(n, v)
-		}
+	for n, v := range extraHeaders {
+		w.Header().Set(n, v)
 	}
 
 	w.WriteHeader(httpCode)

@@ -32,7 +32,7 @@ func (h *HTTP) File(id uint64, prefix string, path string, w http.ResponseWriter
 
 	if !strings.HasPrefix(fn, h.listenerCfg.Root) {
 		processed = true
-		Error(id, false, w, r, http.StatusBadRequest, "Bad request", fmt.Errorf("Hackers path: %s", path))
+		Error(id, false, w, r, http.StatusBadRequest, "Bad request", fmt.Errorf("hackers path: %s", path))
 		return
 	}
 
@@ -45,7 +45,7 @@ func (h *HTTP) File(id uint64, prefix string, path string, w http.ResponseWriter
 	fd, err := os.Open(fn)
 	if err != nil {
 		processed = true
-		Error(id, false, w, r, http.StatusInternalServerError, "Server error", err)
+		Error(id, false, w, r, http.StatusInternalServerError, "server error", err)
 		return
 	}
 	defer fd.Close()
