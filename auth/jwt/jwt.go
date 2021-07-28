@@ -197,19 +197,6 @@ func (ah *AuthHandler) Check(id uint64, prefix string, path string, w http.Respo
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// claims --
-type claims struct {
-	User string `json:"username"`
-	Exp  int64  `json:"exp"`
-}
-
-// Valid --
-func (c claims) Valid() error {
-	return nil
-}
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
 // GetToken --
 func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
 	queryParams := r.URL.Query()
@@ -243,14 +230,7 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 			return
 		}
 
-		claims := claims{
-			User: u,
-			Exp:  time.Now().Add(options.Lifetime).Unix(),
-		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		msg, err := token.SignedString([]byte(options.Secret))
+		msg, _, err := MakeToken(u, options.Secret, options.Lifetime)
 		if err != nil {
 			msg = err.Error()
 			return
@@ -297,6 +277,37 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 	w.Write([]byte(msg))
 
 	return false
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// claims --
+type claims struct {
+	User string `json:"username"`
+	Exp  int64  `json:"exp"`
+}
+
+// Valid --
+func (c claims) Valid() error {
+	return nil
+}
+
+func MakeToken(user string, secret string, lifetime time.Duration) (token string, exp int64, err error) {
+	exp = time.Now().Add(lifetime).Unix()
+
+	claims := claims{
+		User: user,
+		Exp:  exp,
+	}
+
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	token, err = t.SignedString([]byte(secret))
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
