@@ -62,7 +62,7 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 
 	options, ok := methodCfg.Options.(*methodOptions)
 	if !ok {
-		return fmt.Errorf(`Options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
+		return fmt.Errorf(`options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
 	}
 
 	ah.authCfg = &cfg.Auth

@@ -84,16 +84,16 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 
 	options, ok := methodCfg.Options.(*methodOptions)
 	if !ok {
-		return fmt.Errorf(`Options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
+		return fmt.Errorf(`options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
 	}
 
 	if options.KeyFile == "" {
-		return fmt.Errorf(`Keyfile for module "%s" cannot be empty`, module)
+		return fmt.Errorf(`keyfile for module "%s" cannot be empty`, module)
 	}
 
 	options.KeyFile, err = misc.AbsPath(options.KeyFile)
 	if err != nil {
-		return fmt.Errorf(`Auth module "%s" keyfile: %s`, module, err.Error())
+		return fmt.Errorf(`auth module "%s" keyfile: %s`, module, err.Error())
 	}
 
 	ah.kt, err = keytab.Load(options.KeyFile)
@@ -169,14 +169,14 @@ func (ah *AuthHandler) negotiate(r *http.Request) (identity goidentity.Identity,
 	// Decode the header into an SPNEGO context token
 	b, err := base64.StdEncoding.DecodeString(s[1])
 	if err != nil {
-		err = fmt.Errorf("Error in base64 decoding negotiation header: %s", err)
+		err = fmt.Errorf("error in base64 decoding negotiation header: %s", err)
 		return
 	}
 
 	var st spnego.SPNEGOToken
 	err = st.Unmarshal(b)
 	if err != nil {
-		err = fmt.Errorf("Error in unmarshaling SPNEGO token: %s", err)
+		err = fmt.Errorf("error in unmarshaling SPNEGO token: %s", err)
 		return
 	}
 
@@ -186,7 +186,7 @@ func (ah *AuthHandler) negotiate(r *http.Request) (identity goidentity.Identity,
 	// Validate the context token
 	authed, ctx, status := serv.AcceptSecContext(&st)
 	if status.Code != gssapi.StatusComplete && status.Code != gssapi.StatusContinueNeeded {
-		err = fmt.Errorf("Validation error: %v", status)
+		err = fmt.Errorf("validation error: %v", status)
 		return
 	}
 
@@ -196,14 +196,14 @@ func (ah *AuthHandler) negotiate(r *http.Request) (identity goidentity.Identity,
 	}
 
 	if !authed {
-		err = fmt.Errorf("Kerberos authentication failed")
+		err = fmt.Errorf("kerberos authentication failed")
 		return
 	}
 
 	ii := ctx.Value(spnego.CTXKeyCredentials)
 	identity, ok := ii.(goidentity.Identity)
 	if !ok {
-		err = fmt.Errorf("Bad identity type (%T instead %T)", ii, identity)
+		err = fmt.Errorf("bad identity type (%T instead %T)", ii, identity)
 	}
 
 	return

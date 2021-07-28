@@ -9,6 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/alrusov/config"
+	"github.com/alrusov/jsonw"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 	"github.com/alrusov/stdhttp/auth"
@@ -81,16 +82,16 @@ func (ah *AuthHandler) Init(cfg *config.Listener) (err error) {
 
 	options, ok := methodCfg.Options.(*methodOptions)
 	if !ok {
-		return fmt.Errorf(`Options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
+		return fmt.Errorf(`options for module "%s" is "%T", expected "%T"`, module, methodCfg.Options, options)
 	}
 
 	if options.Secret == "" {
-		return fmt.Errorf(`Secret for module "%s" cannot be empty`, module)
+		return fmt.Errorf(`secret for module "%s" cannot be empty`, module)
 	}
 
 	options.Lifetime, err = misc.Interval2Duration(options.LifetimeS)
 	if err != nil {
-		return fmt.Errorf(`Lifetime for "%s": %s`, module, err)
+		return fmt.Errorf(`lifetime for "%s": %s`, module, err)
 	}
 
 	if options.Lifetime <= 0 {
@@ -211,6 +212,8 @@ func (c claims) Valid() error {
 
 // GetToken --
 func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWriter, r *http.Request) bool {
+	queryParams := r.URL.Query()
+
 	code, msg := func() (code int, msg string) {
 		code = http.StatusForbidden
 		msg = ""
@@ -227,7 +230,6 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 			return
 		}
 
-		queryParams := r.URL.Query()
 		u := queryParams.Get("u")
 		if u == "" {
 			msg = `Empty username`
@@ -264,6 +266,31 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 	}
 
 	auth.Log.Message(log.DEBUG, `[%d] JWT token%s: %s`, id, tp, msg)
+
+	_, exists := queryParams["json"]
+	if exists {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(code)
+		var v interface{}
+
+		if code != http.StatusOK {
+			v = struct {
+				Error string `json:"error"`
+			}{
+				Error: msg,
+			}
+		} else {
+			v = struct {
+				Token string `json:"token"`
+			}{
+				Token: msg,
+			}
+		}
+
+		data, _ := jsonw.Marshal(v)
+		w.Write(data)
+		return false
+	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(code)
