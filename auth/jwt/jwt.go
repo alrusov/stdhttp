@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 
 	"github.com/alrusov/config"
 	"github.com/alrusov/jsonw"
@@ -283,19 +283,26 @@ func GetToken(cfg *config.Listener, id uint64, path string, w http.ResponseWrite
 
 // claims --
 type claims struct {
-	User string `json:"username"`
-	Exp  int64  `json:"exp"`
+	jwt.StandardClaims `json:"-"`
+	User               string `json:"username"`
+	Exp                int64  `json:"exp"`
 }
 
 // Valid --
-func (c claims) Valid() error {
+func (c claims) Valid(v *jwt.ValidationHelper) error {
 	return nil
 }
 
 func MakeToken(user string, secret string, lifetime time.Duration) (token string, exp int64, err error) {
-	exp = time.Now().Add(lifetime).Unix()
+	now := time.Now()
+	expT := now.Add(lifetime)
+	exp = expT.Unix()
 
 	claims := claims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: jwt.At(expT),
+			IssuedAt:  jwt.At(now),
+		},
 		User: user,
 		Exp:  exp,
 	}
