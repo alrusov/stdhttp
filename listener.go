@@ -129,6 +129,11 @@ func (h *HTTP) Start() error {
 // Stop --
 func (h *HTTP) Stop() error {
 	misc.StopApp(0)
+	return h.Close()
+}
+
+// Close --
+func (h *HTTP) Close() error {
 	return h.srv.Close()
 }
 

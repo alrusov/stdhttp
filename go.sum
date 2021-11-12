@@ -12,8 +12,8 @@ github.com/alrusov/misc v0.1.34/go.mod h1:wq7jkLgy8u0ogF2EyY1Goes9GftiRcK4w1wH1v
 github.com/alrusov/misc v0.1.39/go.mod h1:9n/TPhEOs7n3zEKP8R/TK0TIOJGISHOJe5KwKqsCsgg=
 github.com/alrusov/misc v0.1.45/go.mod h1:9n/TPhEOs7n3zEKP8R/TK0TIOJGISHOJe5KwKqsCsgg=
 github.com/alrusov/misc v0.1.46/go.mod h1:9n/TPhEOs7n3zEKP8R/TK0TIOJGISHOJe5KwKqsCsgg=
-github.com/alrusov/misc v0.1.47 h1:Z//sdCJgZMHjiY/AR9sHsJetbotfg393KsrrpHAjw0E=
-github.com/alrusov/misc v0.1.47/go.mod h1:9n/TPhEOs7n3zEKP8R/TK0TIOJGISHOJe5KwKqsCsgg=
+github.com/alrusov/misc v0.1.49 h1:kk3js0np7tGXYytErildFKS5FEyBwxIaHJsCpSXKXWs=
+github.com/alrusov/misc v0.1.49/go.mod h1:kb9wxXT9lZpuQ+72uRHs3iqnMiTD3NP9wfV+jeOxHoE=
 github.com/alrusov/panic v0.1.13/go.mod h1:zwS3WCJcw2e8x/A0d1UR7GQeZsoQ+OQ7Cf5x5UQSel8=
 github.com/alrusov/panic v0.1.14 h1:h3DU1GVIp1ab3PPMAOweyWMPILWyLR8EZnjPIx9SUfo=
 github.com/alrusov/panic v0.1.14/go.mod h1:ALoONDJK6XEbMvLnsenCkVSF1LXQ/gjU7uXi0JX7bak=
@@ -44,8 +44,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-golang.org/x/crypto v0.0.0-20210915214749-c084706c2272 h1:3erb+vDS8lU1sxfDHF4/hhWyaXnhIaO+7RgL4fDZORA=
-golang.org/x/crypto v0.0.0-20210915214749-c084706c2272/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
+golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa h1:idItI2DDfCokpg0N51B2VtiLdJ4vAuXC9fnCb2gACo4=
+golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/net v0.0.0-20210226172049-e18ecbb05110/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
