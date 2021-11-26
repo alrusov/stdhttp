@@ -11,14 +11,11 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/alrusov/auth"
 	"github.com/alrusov/config"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
 	"github.com/alrusov/panic"
-	"github.com/alrusov/stdhttp/auth"
-	"github.com/alrusov/stdhttp/auth/basic"
-	"github.com/alrusov/stdhttp/auth/jwt"
-	"github.com/alrusov/stdhttp/auth/krb5"
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -82,19 +79,6 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 		h.authEndpointsKeys[path] = true
 	}
 
-	stdAuthHandlers := []auth.Handler{
-		&basic.AuthHandler{},
-		&jwt.AuthHandler{},
-		&krb5.AuthHandler{},
-	}
-
-	for _, ah := range stdAuthHandlers {
-		err := h.authHandlers.Add(ah)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	h.srv = &http.Server{
 		Addr:              listenerCfg.Addr,
 		Handler:           h,
@@ -108,6 +92,8 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 
 	return h, nil
 }
+
+//----------------------------------------------------------------------------------------------------------------------------//
 
 // Start --
 func (h *HTTP) Start() error {
@@ -126,6 +112,8 @@ func (h *HTTP) Start() error {
 	return err
 }
 
+//----------------------------------------------------------------------------------------------------------------------------//
+
 // Stop --
 func (h *HTTP) Stop() error {
 	misc.StopApp(0)
@@ -135,6 +123,13 @@ func (h *HTTP) Stop() error {
 // Close --
 func (h *HTTP) Close() error {
 	return h.srv.Close()
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// Config --
+func (h *HTTP) Config() *config.Listener {
+	return h.listenerCfg
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -351,10 +346,6 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			w.Header().Add("X-Application-Version", fmt.Sprintf("%s %s%s", misc.AppName(), misc.AppVersion(), tags))
 			w.WriteHeader(http.StatusNoContent)
-			return
-
-		case "/tools/jwt-login":
-			jwt.GetToken(h.listenerCfg, id, path, w, r)
 			return
 
 		case "/tools/sha":

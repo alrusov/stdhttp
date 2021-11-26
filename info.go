@@ -205,7 +205,6 @@ func (h *HTTP) initInfo() {
 		"/maintenance/set-log-level":    "Temporarily change log level. Parameters: level=<level>",
 		"/status":                       "Application current status. Parameters: -",
 		"/status/ping":                  "Checking if the application is running. Parameters: -",
-		"/tools/jwt-login":              "Get jwt token. Parameters: u=<username>, p=<password>, [json]",
 		"/tools/sha":                    "Calculate hash. Parameters: p=<string>, salt=<string>",
 	})
 }
