@@ -112,7 +112,7 @@ func Request(method string, uri string, timeout time.Duration, opts misc.StringM
 	req.URL.RawQuery = params.Encode()
 
 	if timeout == 0 {
-		timeout = config.ClientDefaultTimeout
+		timeout = time.Duration(config.ClientDefaultTimeout)
 	}
 
 	var tr *http.Transport

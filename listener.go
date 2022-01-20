@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/alrusov/auth"
 	"github.com/alrusov/config"
@@ -82,8 +83,8 @@ func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
 	h.srv = &http.Server{
 		Addr:              listenerCfg.Addr,
 		Handler:           h,
-		ReadTimeout:       listenerCfg.Timeout,
-		ReadHeaderTimeout: listenerCfg.Timeout,
+		ReadTimeout:       time.Duration(listenerCfg.Timeout),
+		ReadHeaderTimeout: time.Duration(listenerCfg.Timeout),
 	}
 
 	h.initInfo()
@@ -516,7 +517,7 @@ func GetIdentityFromRequestContext(r *http.Request) (identity *auth.Identity, er
 
 	identity, ok := iface.(*auth.Identity)
 	if !ok {
-		err = fmt.Errorf(`value of the "%s" in context is %T, expected %T`, CtxIdentity, iface, identity)
+		err = fmt.Errorf(`value of the "%s" in context is %T, %T expected`, CtxIdentity, iface, identity)
 		return
 	}
 

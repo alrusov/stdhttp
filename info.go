@@ -145,7 +145,7 @@ func (h *HTTP) initInfo() {
 		WorkDir:       misc.AppWorkDir(),
 		NumCPU:        runtime.NumCPU(),
 		GoMaxProcs:    runtime.GOMAXPROCS(-1),
-		LoadAvgPeriod: h.commonConfig.LoadAvgPeriod,
+		LoadAvgPeriod: time.Duration(h.commonConfig.LoadAvgPeriod),
 		Requests:      h.newStat(),
 
 		Pools: map[string]interface{}{},
@@ -233,7 +233,7 @@ func (h *HTTP) addEndpointsInfo(list misc.StringMap) {
 
 func (h *HTTP) newStat() *urlStat {
 	return &urlStat{
-		la: loadavg.Init(h.commonConfig.LoadAvgPeriod),
+		la: loadavg.Init(time.Duration(h.commonConfig.LoadAvgPeriod)),
 	}
 }
 
