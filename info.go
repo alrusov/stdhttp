@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/alrusov/bufpool"
+	"github.com/alrusov/config"
 	"github.com/alrusov/loadavg"
 	"github.com/alrusov/log"
 	"github.com/alrusov/misc"
@@ -74,7 +75,7 @@ type (
 		NumCPU          int               `json:"numCPU"`
 		GoMaxProcs      int               `json:"goMaxProcs"`
 		NumGoroutine    int               `json:"numGoroutine"`
-		LoadAvgPeriod   time.Duration     `json:"loadAvgPeriod"`
+		LoadAvgPeriod   config.Duration   `json:"loadAvgPeriod"`
 		Requests        *urlStat          `json:"requests"`
 		Pools           misc.InterfaceMap `json:"pools"`
 		poolsUpdate     map[string]PoolStatFunc
@@ -145,7 +146,7 @@ func (h *HTTP) initInfo() {
 		WorkDir:       misc.AppWorkDir(),
 		NumCPU:        runtime.NumCPU(),
 		GoMaxProcs:    runtime.GOMAXPROCS(-1),
-		LoadAvgPeriod: time.Duration(h.commonConfig.LoadAvgPeriod),
+		LoadAvgPeriod: h.commonConfig.LoadAvgPeriod,
 		Requests:      h.newStat(),
 
 		Pools: map[string]interface{}{},
