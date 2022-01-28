@@ -29,7 +29,7 @@ type (
 		listenerCfg       *config.Listener
 		commonConfig      *config.Common
 		srv               *http.Server
-		handlers          []Handler
+		handlers          []HandlerEx
 		authEndpointsKeys misc.BoolMap
 		authHandlers      *auth.Handlers
 		extraFunc         ExtraInfoFunc
@@ -41,7 +41,12 @@ type (
 
 	// Handler --
 	Handler interface {
-		Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) bool
+		Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (processed bool)
+	}
+
+	// HandlerEx --
+	HandlerEx interface {
+		Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (processed bool, basePath string)
 	}
 
 	// ExtraRootItemFunc --
@@ -60,13 +65,28 @@ const (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+type handlerWrapper struct {
+	simple Handler
+}
+
+func (h handlerWrapper) Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (processed bool, basePath string) {
+	processed = h.simple.Handler(id, prefix, path, w, r)
+	return processed, path
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
 // NewListener --
 func NewListener(listenerCfg *config.Listener, handler Handler) (*HTTP, error) {
+	return NewListenerEx(listenerCfg, &handlerWrapper{simple: handler})
+}
+
+func NewListenerEx(listenerCfg *config.Listener, handler HandlerEx) (*HTTP, error) {
 	h := &HTTP{
 		listenerCfg:       listenerCfg,
 		commonConfig:      config.GetCommon(),
 		mutex:             new(sync.Mutex),
-		handlers:          []Handler{handler},
+		handlers:          []HandlerEx{handler},
 		authEndpointsKeys: make(misc.BoolMap, len(listenerCfg.Auth.Endpoints)),
 		authHandlers:      auth.NewHandlers(listenerCfg),
 		extraFunc:         ExtraInfoFunc(nil),
@@ -137,8 +157,13 @@ func (h *HTTP) Config() *config.Listener {
 
 // AddHandler --
 func (h *HTTP) AddHandler(handler Handler, toHead bool) {
+	h.AddHandlerEx(&handlerWrapper{simple: handler}, toHead)
+}
+
+// AddHandlerEx --
+func (h *HTTP) AddHandlerEx(handler HandlerEx, toHead bool) {
 	if toHead {
-		h.handlers = append([]Handler{handler}, h.handlers...)
+		h.handlers = append([]HandlerEx{handler}, h.handlers...)
 		return
 	}
 
@@ -232,8 +257,8 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if !processed {
 			path = url404
 		}
-		h.info.Runtime.Requests.inc()
-		h.updateEndpointStat(path)
+		go h.info.Runtime.Requests.inc()
+		go h.updateEndpointStat(path)
 		misc.LogProcessingTime(Log.Name(), "", id, "listener", "", t0)
 	}()
 
@@ -367,7 +392,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, handler := range h.handlers {
-		if handler.Handler(id, prefix, path, w, r) {
+		var basePath string
+		processed, basePath = handler.Handler(id, prefix, path, w, r)
+		if processed {
+			if basePath != "" {
+				path = basePath
+			}
 			return
 		}
 	}
