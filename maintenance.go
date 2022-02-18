@@ -15,7 +15,7 @@ import (
 
 // SetRootItemsFunc --
 func (h *HTTP) SetRootItemsFunc(f ExtraRootItemFunc) {
-	h.extraRootItemFunc = f
+	h.extraRootItemFuncs = append(h.extraRootItemFuncs, f)
 }
 
 // MenuHighlight --
@@ -78,9 +78,9 @@ func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.Respons
 	_, _, params.CurrentLogLevel = log.CurrentLogLevelEx()
 	params.LightOpen, params.LightClose = h.MenuHighlight()
 
-	if h.extraRootItemFunc != nil {
-		for _, h := range h.extraRootItemFunc(prefix) {
-			params.Extra = append(params.Extra, template.HTML(h))
+	for _, f := range h.extraRootItemFuncs {
+		for _, t := range f(prefix) {
+			params.Extra = append(params.Extra, template.HTML(t))
 		}
 	}
 

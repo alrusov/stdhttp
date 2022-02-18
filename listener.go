@@ -24,19 +24,19 @@ import (
 type (
 	// HTTP --
 	HTTP struct {
-		mutex             *sync.Mutex
-		connectionID      uint64
-		listenerCfg       *config.Listener
-		commonConfig      *config.Common
-		srv               *http.Server
-		handlers          []HandlerEx
-		authEndpointsKeys misc.BoolMap
-		authHandlers      *auth.Handlers
-		extraFunc         ExtraInfoFunc
-		statusFunc        StatusFunc
-		info              *infoBlock
-		extraRootItemFunc ExtraRootItemFunc
-		removedPaths      misc.BoolMap
+		mutex              *sync.Mutex
+		connectionID       uint64
+		listenerCfg        *config.Listener
+		commonConfig       *config.Common
+		srv                *http.Server
+		handlers           []HandlerEx
+		authEndpointsKeys  misc.BoolMap
+		authHandlers       *auth.Handlers
+		extraFunc          ExtraInfoFunc
+		statusFunc         StatusFunc
+		info               *infoBlock
+		extraRootItemFuncs []ExtraRootItemFunc
+		removedPaths       misc.BoolMap
 	}
 
 	// Handler --
