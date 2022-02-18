@@ -8,7 +8,7 @@ require (
 	github.com/alrusov/jsonw v0.1.1
 	github.com/alrusov/loadavg v0.1.4
 	github.com/alrusov/log v0.1.31
-	github.com/alrusov/misc v0.1.51
+	github.com/alrusov/misc v0.1.53
 	github.com/alrusov/panic v0.1.14
 )
 

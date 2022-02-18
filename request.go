@@ -105,6 +105,10 @@ func Request(method string, uri string, timeout time.Duration, opts misc.StringM
 		req.Header.Set(n, v)
 	}
 
+	if _, exists := extraHeaders["Accept-Encoding"]; !exists {
+		req.Header.Set("Accept-Encoding", "gzip")
+	}
+
 	if user != "" || password != "" {
 		req.SetBasicAuth(user, password)
 	}
