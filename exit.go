@@ -35,6 +35,7 @@ func (h *HTTP) exit(id uint64, prefix string, path string, w http.ResponseWriter
 	go func() {
 		panicID := panic.ID()
 		defer panic.SaveStackToLogEx(panicID)
+
 		misc.Sleep(1000 * time.Millisecond)
 		misc.StopApp(int(code))
 	}()

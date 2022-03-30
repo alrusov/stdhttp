@@ -69,7 +69,7 @@ type handlerWrapper struct {
 	simple Handler
 }
 
-func (h handlerWrapper) Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (processed bool, basePath string) {
+func (h *handlerWrapper) Handler(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (processed bool, basePath string) {
 	processed = h.simple.Handler(id, prefix, path, w, r)
 	return processed, path
 }
