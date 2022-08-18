@@ -547,7 +547,7 @@ func GetIdentityFromRequestContext(r *http.Request) (identity *auth.Identity, er
 
 	identity, ok := iface.(*auth.Identity)
 	if !ok {
-		err = fmt.Errorf(`value of the "%s" in context is %T, %T expected`, CtxIdentity, iface, identity)
+		err = fmt.Errorf(`value of the "%s" in context is %T, expected %T`, CtxIdentity, iface, identity)
 		return
 	}
 

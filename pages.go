@@ -19,7 +19,7 @@ var (
 `
 
 	rootPage = htmlTop + `
-		<h4><img src="/favicon.ico" style="width: 16px; height: 16px; position: relative; top: 2px;" alt="" />&nbsp;<em>{{$.Name}} [{{$.App}} {{$.Version}}{{if $.Tags}}&nbsp;{{$.Tags}}{{end}}]</em></h4>
+		<h4><img src="/favicon.ico" style="width: 32px; height: 32px; position: relative; top: 2px;" alt="" />&nbsp;<em>{{$.Name}} [{{$.App}} {{$.Version}}{{if $.Tags}}&nbsp;{{$.Tags}}{{end}}]</em></h4>
 
 		{{if $.ErrMsg}}<p><strong class="attention">{{$.ErrMsg}}</strong></p>{{end}}
 

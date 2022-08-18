@@ -51,7 +51,7 @@ func TestIsPathInList(t *testing.T) {
 
 		_, exists := isPathInList(p.path, p.config)
 		if exists != p.inList {
-			t.Errorf(`[%d] failed: config "%v", path "%s", result "%v", "%v" expected`, i, p.config, p.path, exists, p.inList)
+			t.Errorf(`[%d] failed: config "%v", path "%s", result "%v", expected "%v"`, i, p.config, p.path, exists, p.inList)
 		}
 	}
 }
