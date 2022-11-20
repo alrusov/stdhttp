@@ -529,13 +529,13 @@ func (h *HTTP) IsPathReplaced(path string) bool {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // AddValueToRequestContext --
-func AddValueToRequestContext(r *http.Request, key interface{}, value interface{}) (newR *http.Request) {
+func AddValueToRequestContext(r *http.Request, key any, value any) (newR *http.Request) {
 	ctx := context.WithValue(r.Context(), key, value)
 	return r.WithContext(ctx)
 }
 
 // GetValueFromRequestContext --
-func GetValueFromRequestContext(r *http.Request, key interface{}) (value interface{}) {
+func GetValueFromRequestContext(r *http.Request, key any) (value any) {
 	return r.Context().Value(key)
 }
 

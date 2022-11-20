@@ -32,24 +32,24 @@ const (
 	// ContentTypeBin --
 	ContentTypeBin = "bin"
 
+	// MethodCONNECT --
+	MethodCONNECT = "CONNECT"
+	// MethodTRACE --
+	MethodTRACE = "TRACE"
+	// MethodOPTIONS --
+	MethodOPTIONS = "OPTIONS"
+	// MethodHEAD --
+	MethodHEAD = "HEAD"
 	// MethodGET --
 	MethodGET = "GET"
 	// MethodPOST --
 	MethodPOST = "POST"
-	// MethodHEAD --
-	MethodHEAD = "HEAD"
 	// MethodPUT --
 	MethodPUT = "PUT"
-	// MethodDELETE --
-	MethodDELETE = "DELETE"
-	// MethodCONNECT --
-	MethodCONNECT = "CONNECT"
-	// MethodOPTIONS --
-	MethodOPTIONS = "OPTIONS"
-	// MethodTRACE --
-	MethodTRACE = "TRACE"
 	// MethodPATCH --
 	MethodPATCH = "PATCH"
+	// MethodDELETE --
+	MethodDELETE = "DELETE"
 
 	// HTTPheaderHash --
 	HTTPheaderHash = "X-Hash"
@@ -58,6 +58,18 @@ const (
 var (
 	// Log --
 	Log = log.NewFacility("stdhttp")
+
+	StdMethods = []string{
+		MethodCONNECT,
+		MethodTRACE,
+		MethodOPTIONS,
+		MethodHEAD,
+		MethodGET,
+		MethodPOST,
+		MethodPUT,
+		MethodPATCH,
+		MethodDELETE,
+	}
 
 	// ContentTypes --
 	contentTypes = misc.StringMap{
@@ -97,7 +109,7 @@ func WriteContentHeader(w http.ResponseWriter, contentType string) error {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // SendJSON --
-func SendJSON(w http.ResponseWriter, r *http.Request, statusCode int, data interface{}) {
+func SendJSON(w http.ResponseWriter, r *http.Request, statusCode int, data any) {
 	m, err := jsonw.Marshal(data)
 	if err != nil {
 		m = []byte(err.Error())
@@ -310,7 +322,7 @@ func gzipRecommended(data []byte) bool {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // JSONResultWithDataHash --
-func JSONResultWithDataHash(data interface{}, useHash bool, hash string, srcHeaders misc.StringMap) (result []byte, code int, headers misc.StringMap, err error) {
+func JSONResultWithDataHash(data any, useHash bool, hash string, srcHeaders misc.StringMap) (result []byte, code int, headers misc.StringMap, err error) {
 	headers = srcHeaders
 
 	j, err := jsonw.Marshal(data)

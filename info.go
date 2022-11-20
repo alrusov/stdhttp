@@ -26,8 +26,8 @@ type (
 		Application *applicationBlock        `json:"application"`
 		Runtime     *runtimeBlock            `json:"runtime"`
 		Endpoints   map[string]*endpointInfo `json:"endpoints"`
-		LastLog     interface{}              `json:"lastLog"`
-		Extra       interface{}              `json:"extra"`
+		LastLog     any              `json:"lastLog"`
+		Extra       any              `json:"extra"`
 	}
 
 	applicationBlock struct {
@@ -90,7 +90,7 @@ type (
 	}
 
 	// ExtraInfoFunc --
-	ExtraInfoFunc func() interface{}
+	ExtraInfoFunc func() any
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
