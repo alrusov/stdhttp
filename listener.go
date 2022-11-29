@@ -241,8 +241,13 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	processed := true
 
+	path := r.URL.RawPath
+	if path == "" {
+		path = r.URL.Path
+	}
+	path = misc.NormalizeSlashes(path)
+
 	prefix := ""
-	path := misc.NormalizeSlashes(r.URL.Path)
 
 	if path == h.listenerCfg.ProxyPrefix || strings.HasPrefix(path, h.listenerCfg.ProxyPrefix+"/") {
 		prefix = h.listenerCfg.ProxyPrefix
