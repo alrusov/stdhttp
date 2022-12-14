@@ -26,8 +26,8 @@ type (
 		Application *applicationBlock        `json:"application"`
 		Runtime     *runtimeBlock            `json:"runtime"`
 		Endpoints   map[string]*endpointInfo `json:"endpoints"`
-		LastLog     any              `json:"lastLog"`
-		Extra       any              `json:"extra"`
+		LastLog     any                      `json:"lastLog"`
+		Extra       any                      `json:"extra"`
 	}
 
 	applicationBlock struct {
@@ -216,6 +216,19 @@ func (h *HTTP) addEndpointsInfo(list misc.StringMap) {
 				Description: descr,
 				Stat:        h.newStat(),
 			}
+	}
+}
+
+func (h *HTTP) DelEndpointsInfo(list misc.StringMap) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	h.delEndpointsInfo(list)
+}
+
+func (h *HTTP) delEndpointsInfo(list misc.StringMap) {
+	for name := range list {
+		delete(h.info.Endpoints, name)
 	}
 }
 
