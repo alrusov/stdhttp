@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
@@ -227,11 +226,11 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if Log.CurrentLogLevel() >= log.TRACE4 {
 		body := new(bytes.Buffer)
 		teeReader := io.TeeReader(r.Body, body)
-		data, _, err := ReadData(r.Header, ioutil.NopCloser(teeReader))
+		data, _, err := ReadData(r.Header, io.NopCloser(teeReader))
 		if err == nil && data.Len() > 0 {
 			Log.Message(log.TRACE4, `[%d] Body: %q`, id, data.Bytes())
 		}
-		r.Body = ioutil.NopCloser(body)
+		r.Body = io.NopCloser(body)
 	}
 
 	if !misc.AppStarted() {
