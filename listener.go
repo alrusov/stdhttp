@@ -246,12 +246,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	path = misc.NormalizeSlashes(path)
 
-	prefix := ""
-
-	if path == h.listenerCfg.ProxyPrefix || strings.HasPrefix(path, h.listenerCfg.ProxyPrefix+"/") {
-		prefix = h.listenerCfg.ProxyPrefix
-		path = path[len(h.listenerCfg.ProxyPrefix):]
-	}
+	prefix, path := h.GetPrefix(path, r)
 
 	if path == "" {
 		path = "/"
@@ -555,6 +550,21 @@ func GetIdentityFromRequestContext(r *http.Request) (identity *auth.Identity, er
 		return
 	}
 
+	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+func (h *HTTP) GetPrefix(path string, r *http.Request) (prefix string, newPath string) {
+	proxyPrefix := misc.NormalizeSlashes(r.Header.Get("X-Proxy-Prefix") + h.listenerCfg.ProxyPrefix)
+
+	if proxyPrefix != "" && (path == proxyPrefix || strings.HasPrefix(path, proxyPrefix+"/")) {
+		prefix = proxyPrefix
+		newPath = path[len(proxyPrefix):]
+		return
+	}
+
+	newPath = path
 	return
 }
 
