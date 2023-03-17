@@ -49,6 +49,7 @@ func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.Respons
 
 	params := struct {
 		Prefix          string
+		HeaderPrefix    string
 		ThisPath        string
 		Copyright       string
 		ErrMsg          string
@@ -65,6 +66,7 @@ func (h *HTTP) maintenance(id uint64, prefix string, path string, w http.Respons
 		LightClose      template.HTML
 	}{
 		Prefix:          prefix,
+		HeaderPrefix:    h.GetPrefixFromHeader(r),
 		ThisPath:        r.URL.Path,
 		Copyright:       misc.Copyright(),
 		ErrMsg:          r.URL.Query().Get("___err"),
