@@ -9,7 +9,7 @@ var css = []byte(`
 	color: #000000;
 	outline: 0;
 	font-size: 13px;
-	font-family: Tahoma, Verdana,  Arial, Helvetica, sans-serif;
+	font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif;
 	font-style: normal;
 	font-variant: normal;
 	font-weight: normal;
