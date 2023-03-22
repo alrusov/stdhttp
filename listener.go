@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/alrusov/auth"
 	"github.com/alrusov/config"
@@ -102,8 +101,8 @@ func NewListenerEx(listenerCfg *config.Listener, handler HandlerEx) (*HTTP, erro
 	h.srv = &http.Server{
 		Addr:              listenerCfg.Addr,
 		Handler:           h,
-		ReadTimeout:       time.Duration(listenerCfg.Timeout),
-		ReadHeaderTimeout: time.Duration(listenerCfg.Timeout),
+		ReadTimeout:       listenerCfg.Timeout.D(),
+		ReadHeaderTimeout: listenerCfg.Timeout.D(),
 	}
 
 	h.initInfo()

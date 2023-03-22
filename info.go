@@ -236,7 +236,7 @@ func (h *HTTP) delEndpointsInfo(list misc.StringMap) {
 
 func (h *HTTP) newStat() *urlStat {
 	return &urlStat{
-		la: loadavg.Init(time.Duration(h.commonConfig.LoadAvgPeriod)),
+		la: loadavg.Init(h.commonConfig.LoadAvgPeriod.D()),
 	}
 }
 
