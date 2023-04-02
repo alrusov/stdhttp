@@ -267,7 +267,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authPath, exists := isPathInList(path, h.authEndpointsKeys)
-	if exists {
+	if exists && len(h.listenerCfg.Auth.Endpoints[authPath]) != 0 {
 		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
 		if identity == nil && code != 0 {
 			if len(w.Header()) == 0 {
@@ -421,12 +421,6 @@ func isPathInList(path string, list misc.BoolMap) (pattern string, exists bool) 
 		return
 	}
 
-	_, exists = list["!"+path]
-	if exists {
-		exists = false
-		return
-	}
-
 	iter := 0
 
 	for {
@@ -438,23 +432,11 @@ func isPathInList(path string, list misc.BoolMap) (pattern string, exists bool) 
 				pattern = path + "/*"
 				return
 			}
-
-			_, exists = list["!"+path+"/*"]
-			if exists {
-				exists = false
-				return
-			}
 		}
 
 		_, exists = list[path+"*"]
 		if exists {
 			pattern = path + "*"
-			return
-		}
-
-		_, exists = list["!"+path+"*"]
-		if exists {
-			exists = false
 			return
 		}
 

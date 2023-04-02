@@ -37,13 +37,13 @@ func TestIsPathInList(t *testing.T) {
 		{map[string]bool{"/aaa*": true}, "/aaa", true},
 		{map[string]bool{"/aaa*": true}, "/aaa/bbb", true},
 		{map[string]bool{"/aaa*": true}, "/aaa/bbb/ccc", true},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb": true}, "/aaa", true},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb": true}, "/aaa/bbb", false},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb": true}, "/aaa/bbb/ccc", true},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb*": true}, "/aaa/bbb/ccc", false},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb/*": true}, "/aaa/bbb/ccc", false},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb/ccc*": true}, "/aaa/bbb/ccc", false},
-		{map[string]bool{"/aaa*": true, "!/aaa/bbb/ccc/*": true}, "/aaa/bbb/ccc", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb": true}, "/aaa", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb": true}, "/aaa/bbb", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb": true}, "/aaa/bbb/ccc", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb*": true}, "/aaa/bbb/ccc", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb/*": true}, "/aaa/bbb/ccc", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb/ccc*": true}, "/aaa/bbb/ccc", true},
+		{map[string]bool{"/aaa*": true, "/aaa/bbb/ccc/*": true}, "/aaa/bbb/ccc", true},
 	}
 
 	for i, p := range data {
