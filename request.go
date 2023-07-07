@@ -56,123 +56,23 @@ func (d *unixSocketDialer) Dial(_ string, path string) (net.Conn, error) {
 
 // Request --
 func Request(method string, uri string, timeout time.Duration, opts misc.StringMap, extraHeaders misc.StringMap, data []byte) (*bytes.Buffer, *http.Response, error) {
-	params := url.Values{}
-
-	if data == nil {
-		data = make([]byte, 0)
-	}
-
-	withGzip := gzipRecommended(data)
-	skipTLSverification := false
-	user := ""
-	password := ""
-
+	optsEx := make(url.Values, len(opts))
 	for k, v := range opts {
-		if strings.HasPrefix(k, ".") {
-			switch k {
-			case RequestOptionGzip:
-				withGzip = withGzip && parseBoolOption(v)
-			case RequestOptionSkipTLSVerification:
-				skipTLSverification = parseBoolOption(v)
-			case RequestOptionBasicAuthUser:
-				user = v
-			case RequestOptionBasicAuthPassword:
-				password = v
-			}
-			continue
-		}
-		params.Set(k, v)
+		optsEx[k] = []string{v}
 	}
 
-	if withGzip {
-		b, err := misc.GzipPack(bytes.NewReader(data))
-		if err != nil {
-			return nil, nil, err
-		}
-		data = b.Bytes()
+	extraHeadersEx := make(http.Header, len(opts))
+	for k, v := range extraHeaders {
+		extraHeadersEx[k] = []string{v}
 	}
 
-	req, err := http.NewRequest(method, uri, bytes.NewReader(data))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if withGzip {
-		req.Header.Set("Content-Encoding", "gzip")
-	}
-
-	for n, v := range extraHeaders {
-		req.Header.Set(n, v)
-	}
-
-	if _, exists := extraHeaders["Accept-Encoding"]; !exists {
-		req.Header.Set("Accept-Encoding", "gzip")
-	}
-
-	if user != "" || password != "" {
-		req.SetBasicAuth(user, password)
-	}
-
-	req.URL.RawQuery = params.Encode()
-
-	if timeout == 0 {
-		timeout = config.ClientDefaultTimeout.D()
-	}
-
-	var tr *http.Transport
-	switch req.URL.Scheme {
-	case "http", "https":
-		tr = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: skipTLSverification,
-			},
-		}
-	case "unix":
-		req.URL.Scheme = "http"
-		tr = &http.Transport{
-			Dial: (&unixSocketDialer{
-				net.Dialer{
-					Timeout:   timeout,
-					KeepAlive: timeout,
-				},
-			}).Dial,
-		}
-	default:
-		return nil, nil, fmt.Errorf(`unknown scheme "%s"`, req.URL.Scheme)
-	}
-
-	clnt := &http.Client{
-		Timeout:   timeout,
-		Transport: tr,
-	}
-
-	resp, err := clnt.Do(req)
-	tr.CloseIdleConnections()
-
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-
-	if err != nil {
-		return nil, resp, err
-	}
-
-	bodyBuf, _, err := ReadData(resp.Header, resp.Body)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	if resp.StatusCode/100 != 2 {
-		return bodyBuf, resp, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
-	}
-
-	return bodyBuf, resp, nil
+	return RequestEx(method, uri, timeout, optsEx, extraHeadersEx, data)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // RequestEx --
-func RequestEx(method string, uri string, timeout time.Duration, opts map[string][]string, extraHeaders map[string][]string, data []byte) (*bytes.Buffer, *http.Response, error) {
+func RequestEx(method string, uri string, timeout time.Duration, opts url.Values, extraHeaders http.Header, data []byte) (*bytes.Buffer, *http.Response, error) {
 	params := url.Values{}
 
 	if data == nil {
