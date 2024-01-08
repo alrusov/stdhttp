@@ -51,8 +51,7 @@ const (
 	// MethodDELETE --
 	MethodDELETE = "DELETE"
 
-	// HTTPheaderHash --
-	HTTPheaderHash = "X-Hash"
+	HTTPheaderHash = "X-Hash" // data hash
 )
 
 var (
@@ -228,40 +227,15 @@ func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err erro
 
 // WriteReply --
 func WriteReply(w http.ResponseWriter, r *http.Request, httpCode int, contentCode string, extraHeaders misc.StringMap, data []byte) (err error) {
-	if len(data) > 0 && (extraHeaders == nil || extraHeaders["Content-Encoding"] == "") && gzipRecommended(data) {
-		do := false
-
-		if r == nil {
-			do = true
-		} else {
-			for _, s := range r.Header["Accept-Encoding"] {
-				func() {
-					ss := strings.Split(s, ",")
-					for _, v := range ss {
-						switch v {
-						case "*", "gzip":
-							do = true
-							return
-						}
-					}
-				}()
-
-				if do {
-					break
-				}
-			}
+	if UseGzip(r, len(data), extraHeaders) {
+		var b *bytes.Buffer
+		b, err = misc.GzipPack(bytes.NewReader(data))
+		if err != nil {
+			return err
 		}
 
-		if do {
-			var b *bytes.Buffer
-			b, err = misc.GzipPack(bytes.NewReader(data))
-			if err != nil {
-				return err
-			}
-
-			data = b.Bytes()
-			w.Header().Set("Content-Encoding", "gzip")
-		}
+		data = b.Bytes()
+		w.Header().Set("Content-Encoding", "gzip")
 	}
 
 	if contentCode != "" {
@@ -298,6 +272,34 @@ func CloneURLvalues(src url.Values) (dst url.Values) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+func UseGzip(r *http.Request, dataLen int, headers misc.StringMap) bool {
+	if headers != nil && headers["Content-Encoding"] != "" {
+		return false
+	}
+
+	if !gzipRecommended(dataLen) {
+		return false
+	}
+
+	if r == nil {
+		return true
+	}
+
+	for _, s := range r.Header["Accept-Encoding"] {
+		ss := strings.Split(s, ",")
+		for _, v := range ss {
+			switch v {
+			case "*", "gzip":
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
 var minSizeForGzip = int32(0)
 
 // SetMinSizeForGzip --
@@ -305,18 +307,9 @@ func SetMinSizeForGzip(size int) {
 	atomic.StoreInt32(&minSizeForGzip, int32(size))
 }
 
-func gzipRecommended(data []byte) bool {
-	if data == nil {
-		return false
-	}
-
-	ln := len(data)
-	if ln == 0 {
-		return false
-	}
-
+func gzipRecommended(dataLen int) bool {
 	minSize := int(atomic.LoadInt32(&minSizeForGzip))
-	return minSize >= 0 && ln >= minSize
+	return minSize >= 0 && dataLen >= minSize
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

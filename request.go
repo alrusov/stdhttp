@@ -79,7 +79,7 @@ func RequestEx(method string, uri string, timeout time.Duration, opts url.Values
 		data = make([]byte, 0)
 	}
 
-	withGzip := gzipRecommended(data)
+	withGzip := gzipRecommended(len(data))
 	skipTLSverification := false
 	user := ""
 	password := ""
