@@ -119,13 +119,14 @@ func SendJSON(w http.ResponseWriter, r *http.Request, statusCode int, data any) 
 
 //-----------------------------------------------------------------------------s-----------------------------------------------//
 
+type ErrorResponse struct {
+	Message string `json:"error"`
+}
+
 // Error --
 func Error(id uint64, answerSent bool, w http.ResponseWriter, r *http.Request, httpCode int, message string, err error) {
 	if w != nil && !answerSent {
-		type e struct {
-			Message string `json:"error"`
-		}
-		msg := e{Message: message}
+		msg := ErrorResponse{Message: message}
 		SendJSON(w, r, httpCode, msg)
 	}
 
