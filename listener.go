@@ -222,14 +222,18 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	Log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New %s request "%s" from %s`, id, r.Method, r.RequestURI, realIP)
-	if Log.CurrentLogLevel() >= log.TRACE4 {
-		body := new(bytes.Buffer)
-		teeReader := io.TeeReader(r.Body, body)
-		data, _, err := ReadData(r.Header, io.NopCloser(teeReader))
-		if err == nil && data.Len() > 0 {
-			Log.Message(log.TRACE4, `[%d] Body: %q`, id, data.Bytes())
+	if Log.CurrentLogLevel() >= log.TRACE3 {
+		Log.Message(log.TRACE3, `[%d] Header: %v`, id, r.Header)
+
+		if Log.CurrentLogLevel() >= log.TRACE4 {
+			body := new(bytes.Buffer)
+			teeReader := io.TeeReader(r.Body, body)
+			data, _, err := ReadData(r.Header, io.NopCloser(teeReader))
+			if err == nil && data.Len() > 0 {
+				Log.Message(log.TRACE4, `[%d] Body: %q`, id, data.Bytes())
+			}
+			r.Body = io.NopCloser(body)
 		}
-		r.Body = io.NopCloser(body)
 	}
 
 	if !misc.AppStarted() {
