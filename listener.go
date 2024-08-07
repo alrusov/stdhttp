@@ -22,7 +22,7 @@ import (
 type (
 	// HTTP --
 	HTTP struct {
-		mutex              *sync.Mutex
+		sync.Mutex
 		connectionID       uint64
 		listenerCfg        *config.Listener
 		commonConfig       *config.Common
@@ -83,7 +83,6 @@ func NewListenerEx(listenerCfg *config.Listener, handler HandlerEx) (*HTTP, erro
 	h := &HTTP{
 		listenerCfg:       listenerCfg,
 		commonConfig:      config.GetCommon(),
-		mutex:             new(sync.Mutex),
 		handlers:          []HandlerEx{handler},
 		authEndpointsKeys: make(misc.BoolMap, len(listenerCfg.Auth.Endpoints)),
 		authHandlers:      auth.NewHandlers(listenerCfg),
@@ -186,8 +185,8 @@ func (h *HTTP) AddAuthEndpoint(endpoint string, permissions misc.BoolMap) {
 
 // SetStatusFunc --
 func (h *HTTP) SetStatusFunc(f StatusFunc, paramsInfo string) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	h.statusFunc = f
 
@@ -487,24 +486,24 @@ func AddLogFilterForRequest(exp string, replace string) error {
 
 // RemoveStdPath --
 func (h *HTTP) RemoveStdPath(path string) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	h.removedPaths[path] = true
 }
 
 // CancelPathReplacing --
 func (h *HTTP) CancelPathReplacing(path string) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	delete(h.removedPaths, path)
 }
 
 // IsPathReplaced --
 func (h *HTTP) IsPathReplaced(path string) bool {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	_, exists := h.removedPaths[path]
 	return exists

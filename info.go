@@ -203,8 +203,8 @@ func (h *HTTP) initInfo() {
 
 // AddEndpointsInfo --
 func (h *HTTP) AddEndpointsInfo(list misc.StringMap) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	h.addEndpointsInfo(list)
 }
@@ -220,8 +220,8 @@ func (h *HTTP) addEndpointsInfo(list misc.StringMap) {
 }
 
 func (h *HTTP) DelEndpointsInfo(list misc.StringMap) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	h.delEndpointsInfo(list)
 }
@@ -243,8 +243,8 @@ func (h *HTTP) newStat() *urlStat {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func (h *HTTP) updateEndpointStat(path string) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	ep, exists := h.info.Endpoints[path]
 	if !exists {
@@ -279,8 +279,8 @@ func (h *HTTP) SetExtraInfoFunc(f ExtraInfoFunc) {
 //----------------------------------------------------------------------------------------------------------------------------//
 
 func (h *HTTP) showInfo(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	info := h.info
 

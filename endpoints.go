@@ -24,11 +24,11 @@ func (h *HTTP) endpoints(id uint64, prefix string, path string, w http.ResponseW
 		List:   make(dblStrArray, 0, len(h.info.Endpoints)),
 	}
 
-	h.mutex.Lock()
+	h.Lock()
 	for name, info := range h.info.Endpoints {
 		params.List = append(params.List, [2]string{name, info.Description})
 	}
-	h.mutex.Unlock()
+	h.Unlock()
 	sort.Sort(params.List)
 
 	t, err := template.New("endpoints").Parse(endpointsPage)
