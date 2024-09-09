@@ -22,71 +22,71 @@ import (
 const url404 = `/errors/404`
 
 type (
-	infoBlock struct {
-		Application *applicationBlock        `json:"application"`
-		Runtime     *runtimeBlock            `json:"runtime"`
-		Endpoints   map[string]*endpointInfo `json:"endpoints"`
-		LastLog     any                      `json:"lastLog"`
-		Extra       any                      `json:"extra"`
+	InfoBlock struct {
+		Application *applicationBlock        `json:"application" comment:"Application info"`
+		Runtime     *runtimeBlock            `json:"runtime" comment:"Runtime info"`
+		Endpoints   map[string]*endpointInfo `json:"endpoints" comment:"Enpoints info"`
+		LastLog     []string                 `json:"lastLog" comment:"Last lines from the log"`
+		Extra       any                      `json:"extra" comment:"Application extra info"`
 	}
 
 	applicationBlock struct {
-		Copyright   string    `json:"copyright"`
-		AppName     string    `json:"appName"`
-		Name        string    `json:"name"`
-		Description string    `json:"description"`
-		Version     string    `json:"version"`
-		Tags        string    `json:"tags"`
-		BuildTime   time.Time `json:"buildTime"`
-		GoVersion   string    `json:"goVersion"`
-		OS          string    `json:"os"`
-		Arch        string    `json:"arch"`
+		Copyright   string    `json:"copyright" comment:"Copyright"`
+		AppName     string    `json:"appName" comment:"Common name"`
+		Name        string    `json:"name" comment:"Name"`
+		Description string    `json:"description" comment:"Description"`
+		Version     string    `json:"version" comment:"Version"`
+		Tags        string    `json:"tags" comment:"Tags"`
+		BuildTime   time.Time `json:"buildTime" comment:"Build time"`
+		GoVersion   string    `json:"goVersion" comment:"Golang version"`
+		OS          string    `json:"os" comment:"OS"`
+		Arch        string    `json:"arch" comment:"Architecture"`
 	}
 
 	idDef struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
+		ID   int    `json:"id" comment:"ID"`
+		Name string `json:"name" comment:"Name"`
 	}
 
 	runtimeBlock struct {
-		StartTime       time.Time       `json:"startTime"`
-		Now             time.Time       `json:"now"`
-		Uptime          int64           `json:"upTime"`
-		PID             int             `json:"pid"`
-		User            idDef           `json:"user"`
-		Group           idDef           `json:"group"`
-		EffectiveUser   idDef           `json:"effectiveUser"`
-		EffectiveGroup  idDef           `json:"effectiveGroup"`
-		Host            string          `json:"host"`
-		IP              []string        `json:"ip"`
-		CommandLine     string          `json:"commandLine"`
-		Application     string          `json:"application"`
-		WorkDir         string          `json:"workDir"`
-		LogLevel        string          `json:"logLevel"`
-		LogFile         string          `json:"logFile"`
-		ProfilerEnabled bool            `json:"profilerEnabled"`
-		AllocSys        uint64          `json:"allocSys"`
-		HeapSys         uint64          `json:"heapSys"`
-		HeapInuse       uint64          `json:"heapInuse"`
-		HeapObjects     uint64          `json:"heapObjects"`
-		StackSys        uint64          `json:"stackSys"`
-		StackInuse      uint64          `json:"stackInuse"`
-		NumCPU          int             `json:"numCPU"`
-		GoMaxProcs      int             `json:"goMaxProcs"`
-		NumGoroutine    int             `json:"numGoroutine"`
-		LoadAvgPeriod   config.Duration `json:"loadAvgPeriod"`
-		Requests        *urlStat        `json:"requests"`
+		StartTime       time.Time       `json:"startTime" comment:"Start time"`
+		Now             time.Time       `json:"now" comment:"Current time"`
+		Uptime          int64           `json:"upTime" comment:"Uptime"`
+		PID             int             `json:"pid" comment:"Process ID"`
+		User            idDef           `json:"user" comment:"User"`
+		Group           idDef           `json:"group" comment:"Group"`
+		EffectiveUser   idDef           `json:"effectiveUser" comment:"Effective user"`
+		EffectiveGroup  idDef           `json:"effectiveGroup" comment:"Effective group"`
+		Host            string          `json:"host" comment:"Host name"`
+		IP              []string        `json:"ip" comment:"Host IPs"`
+		CommandLine     string          `json:"commandLine" comment:"Command line"`
+		Application     string          `json:"application" comment:"Application name"`
+		WorkDir         string          `json:"workDir" comment:"Working directory"`
+		LogLevel        string          `json:"logLevel" comment:"Default log level"`
+		LogFile         string          `json:"logFile" comment:"Current log file name"`
+		ProfilerEnabled bool            `json:"profilerEnabled" comment:"Is profiler enabled"`
+		AllocSys        uint64          `json:"allocSys" comment:"Allocated heap"`
+		HeapSys         uint64          `json:"heapSys" comment:"Available heap"`
+		HeapInuse       uint64          `json:"heapInuse" comment:"Heap in use"`
+		HeapObjects     uint64          `json:"heapObjects" comment:"Number of heap objects"`
+		StackSys        uint64          `json:"stackSys" comment:"Allocated stack"`
+		StackInuse      uint64          `json:"stackInuse" comment:"Stack inuse"`
+		NumCPU          int             `json:"numCPU" comment:"Number of CPU"`
+		GoMaxProcs      int             `json:"goMaxProcs" comment:"Max procs for golang"`
+		NumGoroutine    int             `json:"numGoroutine" comment:"Number of goroutines"`
+		LoadAvgPeriod   config.Duration `json:"loadAvgPeriod" comment:"Load average period"`
+		Requests        *urlStat        `json:"requests" comment:"Requests statistic"`
 	}
 
 	endpointInfo struct {
-		Description string   `json:"description"`
-		Stat        *urlStat `json:"stat"`
+		Description string   `json:"description" comment:"Description"`
+		Stat        *urlStat `json:"stat" comment:"Statistics"`
 	}
 
 	urlStat struct {
-		Total   uint64 `json:"total"`
+		Total   uint64 `json:"total" comment:"Total requests"`
 		la      *loadavg.LoadAvg
-		LoadAvg float64 `json:"loadAvg"`
+		LoadAvg float64 `json:"loadAvg" comment:"Load average"`
 	}
 
 	// ExtraInfoFunc --
@@ -230,6 +230,18 @@ func (h *HTTP) delEndpointsInfo(list misc.StringMap) {
 	for name := range list {
 		delete(h.info.Endpoints, name)
 	}
+}
+
+func (h *HTTP) EndpointDescription(name string) string {
+	h.Lock()
+	defer h.Unlock()
+
+	e := h.info.Endpoints[name]
+	if e == nil {
+		return ""
+	}
+
+	return e.Description
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
