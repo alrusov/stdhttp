@@ -249,11 +249,13 @@ func NewBodyReader(header http.Header, body io.ReadCloser) (reader *BodyReader, 
 	}
 
 	reader.buf = bufio.NewReader(rd)
-	r, _, err := reader.buf.ReadRune()
-	if err != nil {
+	r, _, e := reader.buf.ReadRune()
+	eof := e != nil && e.Error() == io.EOF.Error()
+	if e != nil && !eof {
+		err = e
 		return
 	}
-	if r != '\uFEFF' {
+	if !eof && r != '\uFEFF' {
 		reader.buf.UnreadRune() // Not a BOM -- put the rune back
 	}
 
