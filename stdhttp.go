@@ -1,7 +1,9 @@
 package stdhttp
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
@@ -201,6 +203,7 @@ func ReadData(header http.Header, body io.ReadCloser) (bodyBuf *bytes.Buffer, co
 	}
 
 	if header.Get("Content-Encoding") == "gzip" {
+		header.Del("Content-Encoding")
 		bodyBuf, err = misc.GzipUnpack(body)
 	} else {
 		bodyBuf = new(bytes.Buffer)
@@ -214,6 +217,67 @@ func ReadData(header http.Header, body io.ReadCloser) (bodyBuf *bytes.Buffer, co
 	}
 
 	code = http.StatusOK
+	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// BodyReader -- get body reader with gz (if needed), buffering and stripped BOM
+type BodyReader struct {
+	body io.ReadCloser
+	gzip io.ReadCloser
+	buf  *bufio.Reader
+}
+
+func NewBodyReader(header http.Header, body io.ReadCloser) (reader *BodyReader, err error) {
+	reader = &BodyReader{
+		body: body,
+	}
+
+	if body == nil {
+		return
+	}
+
+	rd := body
+
+	if header.Get("Content-Encoding") == "gzip" {
+		rd, err = gzip.NewReader(body)
+		if err != nil {
+			return
+		}
+		reader.gzip = rd
+	}
+
+	reader.buf = bufio.NewReader(rd)
+	r, _, err := reader.buf.ReadRune()
+	if err != nil {
+		return
+	}
+	if r != '\uFEFF' {
+		reader.buf.UnreadRune() // Not a BOM -- put the rune back
+	}
+
+	return
+}
+
+func (reader *BodyReader) Read(p []byte) (n int, err error) {
+	return reader.buf.Read(p)
+}
+
+func (reader *BodyReader) Close() (err error) {
+	if reader == nil {
+		return
+	}
+
+	if reader.gzip != nil {
+		reader.gzip.Close()
+	}
+	reader.gzip = nil
+
+	if reader.body != nil {
+		reader.body.Close()
+	}
+	reader.body = nil
 	return
 }
 

@@ -100,7 +100,7 @@ func NewListenerEx(listenerCfg *config.Listener, handler HandlerEx) (*HTTP, erro
 	h.srv = &http.Server{
 		Addr:              listenerCfg.Addr,
 		Handler:           h,
-		ReadTimeout:       listenerCfg.Timeout.D(),
+		ReadTimeout:       0,
 		ReadHeaderTimeout: listenerCfg.Timeout.D(),
 	}
 
