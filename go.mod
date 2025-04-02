@@ -1,14 +1,14 @@
 module github.com/alrusov/stdhttp
 
-go 1.23.4
+go 1.24.1
 
 require (
-	github.com/alrusov/auth v0.1.10
-	github.com/alrusov/config v0.1.60
+	github.com/alrusov/auth v0.1.11
+	github.com/alrusov/config v0.1.61
 	github.com/alrusov/jsonw v0.1.3
 	github.com/alrusov/loadavg v0.1.6
 	github.com/alrusov/log v0.1.39
-	github.com/alrusov/misc v1.1.20
+	github.com/alrusov/misc v1.1.22
 	github.com/alrusov/panic v0.1.15
 )
 

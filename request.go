@@ -73,8 +73,6 @@ func Request(method string, uri string, timeout time.Duration, opts misc.StringM
 
 // RequestEx --
 func RequestEx(method string, uri string, timeout time.Duration, opts url.Values, extraHeaders http.Header, data []byte) (*bytes.Buffer, *http.Response, error) {
-	params := url.Values{}
-
 	if data == nil {
 		data = make([]byte, 0)
 	}
@@ -85,24 +83,23 @@ func RequestEx(method string, uri string, timeout time.Duration, opts url.Values
 	password := ""
 
 	for k, values := range opts {
-		v := values[0]
 		if strings.HasPrefix(k, ".") {
+			v := values[0]
 			switch k {
 			case RequestOptionGzip:
 				withGzip = withGzip && parseBoolOption(v)
+				delete(opts, k)
 			case RequestOptionSkipTLSVerification:
 				skipTLSverification = parseBoolOption(v)
+				delete(opts, k)
 			case RequestOptionBasicAuthUser:
 				user = v
+				delete(opts, k)
 			case RequestOptionBasicAuthPassword:
 				password = v
+				delete(opts, k)
 			}
-			continue
 		}
-		for _, v := range values {
-			params.Add(k, v)
-		}
-
 	}
 
 	if withGzip {
@@ -136,7 +133,7 @@ func RequestEx(method string, uri string, timeout time.Duration, opts url.Values
 		req.SetBasicAuth(user, password)
 	}
 
-	req.URL.RawQuery = params.Encode()
+	req.URL.RawQuery = opts.Encode()
 
 	if timeout == 0 {
 		timeout = config.ClientDefaultTimeout.D()
