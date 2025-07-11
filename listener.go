@@ -221,17 +221,20 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	Log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New %s request "%s" from %s`, id, r.Method, r.RequestURI, realIP)
+
+	var err error
+	r.Body, err = BodyReader(r.Header, r.Body)
+	if err != nil {
+		Error(id, false, w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
 	if Log.CurrentLogLevel() >= log.TRACE3 {
 		Log.Message(log.TRACE3, `[%d] Header: %v`, id, r.Header)
-
 		if Log.CurrentLogLevel() >= log.TRACE4 {
-			body := new(bytes.Buffer)
-			teeReader := io.TeeReader(r.Body, body)
-			data, _, err := ReadData(r.Header, io.NopCloser(teeReader))
-			if err == nil && data.Len() > 0 {
-				Log.Message(log.TRACE4, `[%d] Body: %q`, id, data.Bytes())
-			}
-			r.Body = io.NopCloser(body)
+			bb, _ := io.ReadAll(r.Body)
+			Log.Message(log.TRACE4, `[%d] Body: %q`, id, bb)
+			r.Body = io.NopCloser(bytes.NewBuffer(bb))
 		}
 	}
 

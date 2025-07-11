@@ -53,7 +53,10 @@ const (
 	// MethodDELETE --
 	MethodDELETE = "DELETE"
 
-	HTTPheaderHash = "X-Hash" // data hash
+	HTTPheaderHash            = "X-Hash" // data hash
+	HTTPheaderContentEncoding = "Content-Encoding"
+	HTTPheaderAcceptEncoding  = "Accept-Encoding"
+	ContentEncodingGzip       = "gzip"
 )
 
 var (
@@ -194,45 +197,18 @@ func ReturnRefresh(id uint64, w http.ResponseWriter, r *http.Request, httpCode i
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// ReadData --
-func ReadData(header http.Header, body io.ReadCloser) (bodyBuf *bytes.Buffer, code int, err error) {
-	if body == nil {
-		bodyBuf = &bytes.Buffer{}
-		code = http.StatusOK
-		return
-	}
-
-	if header.Get("Content-Encoding") == "gzip" {
-		header.Del("Content-Encoding")
-		bodyBuf, err = misc.GzipUnpack(body)
-	} else {
-		bodyBuf = new(bytes.Buffer)
-		_, err = bodyBuf.ReadFrom(body)
-	}
-
-	if err != nil {
-		bodyBuf = nil
-		code = http.StatusInternalServerError
-		return
-	}
-
-	code = http.StatusOK
-	return
-}
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
 // BodyReader -- get body reader with gz (if needed), buffering and stripped BOM
-type BodyReader struct {
+type bodyReader struct {
 	body io.ReadCloser
 	gzip io.ReadCloser
 	buf  *bufio.Reader
 }
 
-func NewBodyReader(header http.Header, body io.ReadCloser) (reader *BodyReader, err error) {
-	reader = &BodyReader{
+func BodyReader(header http.Header, body io.ReadCloser) (br io.ReadCloser, err error) {
+	reader := &bodyReader{
 		body: body,
 	}
+	br = reader
 
 	if body == nil {
 		return
@@ -240,7 +216,7 @@ func NewBodyReader(header http.Header, body io.ReadCloser) (reader *BodyReader, 
 
 	rd := body
 
-	if header.Get("Content-Encoding") == "gzip" {
+	if header.Get(HTTPheaderContentEncoding) == ContentEncodingGzip {
 		rd, err = gzip.NewReader(body)
 		if err != nil {
 			return
@@ -262,11 +238,15 @@ func NewBodyReader(header http.Header, body io.ReadCloser) (reader *BodyReader, 
 	return
 }
 
-func (reader *BodyReader) Read(p []byte) (n int, err error) {
+func (reader *bodyReader) Read(p []byte) (n int, err error) {
+	if reader == nil {
+		return
+	}
+
 	return reader.buf.Read(p)
 }
 
-func (reader *BodyReader) Close() (err error) {
+func (reader *bodyReader) Close() (err error) {
 	if reader == nil {
 		return
 	}
@@ -285,16 +265,9 @@ func (reader *BodyReader) Close() (err error) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// ReadRequestBody --
-func ReadRequestBody(r *http.Request) (bodyBuf *bytes.Buffer, code int, err error) {
-	return ReadData(r.Header, r.Body)
-}
-
-//----------------------------------------------------------------------------------------------------------------------------//
-
 // WriteReply --
 func WriteReply(w http.ResponseWriter, r *http.Request, httpCode int, contentCode string, extraHeaders misc.StringMap, data []byte) (err error) {
-	if UseGzip(r, len(data), extraHeaders) {
+	if UseGzip(r, len(data), &extraHeaders) {
 		var b *bytes.Buffer
 		b, err = misc.GzipPack(bytes.NewReader(data))
 		if err != nil {
@@ -302,7 +275,6 @@ func WriteReply(w http.ResponseWriter, r *http.Request, httpCode int, contentCod
 		}
 
 		data = b.Bytes()
-		w.Header().Set("Content-Encoding", "gzip")
 	}
 
 	if contentCode != "" {
@@ -339,30 +311,40 @@ func CloneURLvalues(src url.Values) (dst url.Values) {
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-func UseGzip(r *http.Request, dataLen int, headers misc.StringMap) bool {
-	if headers != nil && headers["Content-Encoding"] != "" {
-		return false
+func UseGzip(r *http.Request, dataLen int, headers *misc.StringMap) (use bool) {
+	if *headers != nil && (*headers)[HTTPheaderContentEncoding] != "" {
+		return
 	}
 
 	if !gzipRecommended(dataLen) {
-		return false
+		return
 	}
+
+	defer func() {
+		if use {
+			if *headers == nil {
+				*headers = misc.StringMap{}
+			}
+			(*headers)[HTTPheaderContentEncoding] = ContentEncodingGzip
+		}
+	}()
 
 	if r == nil {
-		return true
+		use = true
+		return
 	}
 
-	for _, s := range r.Header["Accept-Encoding"] {
-		ss := strings.Split(s, ",")
-		for _, v := range ss {
-			switch v {
-			case "*", "gzip":
-				return true
+	for _, s := range r.Header[HTTPheaderAcceptEncoding] {
+		for v := range strings.SplitSeq(s, ",") {
+			switch strings.TrimSpace(v) {
+			case "*", ContentEncodingGzip:
+				use = true
+				return
 			}
 		}
 	}
 
-	return false
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

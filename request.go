@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -116,7 +117,7 @@ func RequestEx(method string, uri string, timeout time.Duration, opts url.Values
 	}
 
 	if withGzip {
-		req.Header.Set("Content-Encoding", "gzip")
+		req.Header.Set(HTTPheaderContentEncoding, ContentEncodingGzip)
 	}
 
 	for n, values := range extraHeaders {
@@ -125,8 +126,8 @@ func RequestEx(method string, uri string, timeout time.Duration, opts url.Values
 		}
 	}
 
-	if _, exists := extraHeaders["Accept-Encoding"]; !exists {
-		req.Header.Set("Accept-Encoding", "gzip")
+	if _, exists := extraHeaders[HTTPheaderAcceptEncoding]; !exists {
+		req.Header.Set(HTTPheaderAcceptEncoding, ContentEncodingGzip)
 	}
 
 	if user != "" || password != "" {
@@ -177,16 +178,26 @@ func RequestEx(method string, uri string, timeout time.Duration, opts url.Values
 		return nil, resp, err
 	}
 
-	bodyBuf, _, err := ReadData(resp.Header, resp.Body)
+	rd, err := BodyReader(resp.Header, resp.Body)
+	if rd != nil {
+		defer rd.Close()
+	}
 	if err != nil {
 		return nil, resp, err
 	}
 
-	if resp.StatusCode/100 != 2 {
-		return bodyBuf, resp, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
+	b, err := io.ReadAll(rd)
+	if err != nil {
+		return nil, resp, err
 	}
 
-	return bodyBuf, resp, nil
+	bb := bytes.NewBuffer(b)
+
+	if resp.StatusCode/100 != 2 {
+		return bb, resp, errors.New("Status code " + strconv.Itoa(resp.StatusCode))
+	}
+
+	return bb, resp, nil
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
