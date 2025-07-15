@@ -313,7 +313,7 @@ func CloneURLvalues(src url.Values) (dst url.Values) {
 
 func UseGzip(r *http.Request, dataLen int, headers *misc.StringMap) (use bool) {
 	if *headers != nil && (*headers)[HTTPheaderContentEncoding] != "" {
-		return
+		return (*headers)[HTTPheaderContentEncoding] == ContentEncodingGzip
 	}
 
 	if !gzipRecommended(dataLen) {
