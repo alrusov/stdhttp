@@ -97,8 +97,13 @@ func NewListenerEx(listenerCfg *config.Listener, handler HandlerEx) (*HTTP, erro
 		h.authEndpointsKeys[path] = true
 	}
 
+	addr := listenerCfg.Addr
+	if misc.IsDebug() && listenerCfg.DebugAddr != "" {
+		addr = listenerCfg.DebugAddr
+	}
+
 	h.srv = &http.Server{
-		Addr:              listenerCfg.Addr,
+		Addr:              addr,
 		Handler:           h,
 		ReadTimeout:       0,
 		ReadHeaderTimeout: listenerCfg.Timeout.D(),
@@ -106,7 +111,7 @@ func NewListenerEx(listenerCfg *config.Listener, handler HandlerEx) (*HTTP, erro
 
 	h.initInfo()
 
-	Log.Message(log.INFO, `Listener created on "%s"`, listenerCfg.Addr)
+	Log.Message(log.INFO, `Listener created on "%s"`, addr)
 
 	return h, nil
 }
