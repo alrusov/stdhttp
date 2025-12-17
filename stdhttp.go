@@ -19,39 +19,34 @@ import (
 )
 
 const (
-	// ContentTypeHTML --
 	ContentTypeHTML = "html"
-	// ContentTypeCSS --
-	ContentTypeCSS = "css"
-	// ContentTypeText --
+	ContentTypeCSS  = "css"
+	ContentTypeJS   = "js"
+	ContentTypeCsv  = "csv"
 	ContentTypeText = "text"
-	// ContentTypeJSON --
+	ContentTypeTxt  = "txt"
 	ContentTypeJSON = "json"
-	// ContentTypeIcon --
+	ContentTypeXML  = "xml"
+	ContentTypeZip  = "zip"
 	ContentTypeIcon = "ico"
-	// ContentTypeForm --
 	ContentTypeForm = "form"
-	// ContentTypeBin --
-	ContentTypeBin = "bin"
+	ContentTypeBin  = "bin"
+	ContentTypePng  = "png"
+	ContentTypeJpeg = "jpeg"
+	ContentTypeJpg  = "jpg"
+	ContentTypeSvg  = "svg"
+	ContentTypePdf  = "pdf"
+	ContentTypeToml = "toml"
 
-	// MethodCONNECT --
 	MethodCONNECT = "CONNECT"
-	// MethodTRACE --
-	MethodTRACE = "TRACE"
-	// MethodOPTIONS --
+	MethodTRACE   = "TRACE"
 	MethodOPTIONS = "OPTIONS"
-	// MethodHEAD --
-	MethodHEAD = "HEAD"
-	// MethodGET --
-	MethodGET = "GET"
-	// MethodPOST --
-	MethodPOST = "POST"
-	// MethodPUT --
-	MethodPUT = "PUT"
-	// MethodPATCH --
-	MethodPATCH = "PATCH"
-	// MethodDELETE --
-	MethodDELETE = "DELETE"
+	MethodHEAD    = "HEAD"
+	MethodGET     = "GET"
+	MethodPOST    = "POST"
+	MethodPUT     = "PUT"
+	MethodPATCH   = "PATCH"
+	MethodDELETE  = "DELETE"
 
 	HTTPheaderHash            = "X-Hash" // data hash
 	HTTPheaderContentEncoding = "Content-Encoding"
@@ -79,11 +74,22 @@ var (
 	contentTypes = misc.StringMap{
 		ContentTypeHTML: "text/html; charset=utf-8",
 		ContentTypeCSS:  "text/css; charset=utf-8",
+		ContentTypeJS:   "text/javascript; charset=utf-8",
+		ContentTypeCsv:  "text/csv; charset=utf-8",
 		ContentTypeText: "text/plain; charset=utf-8",
+		ContentTypeTxt:  "text/plain; charset=utf-8",
 		ContentTypeJSON: "application/json; charset=utf-8",
+		ContentTypeXML:  "application/xml; charset=utf-8",
+		ContentTypeZip:  "application/zip",
 		ContentTypeIcon: "image/x-icon",
 		ContentTypeForm: "application/x-www-form-urlencoded",
 		ContentTypeBin:  "application/octet-stream",
+		ContentTypePng:  "image/png",
+		ContentTypeJpeg: "image/jpeg",
+		ContentTypeJpg:  "image/jpeg",
+		ContentTypeSvg:  "image/svg+xml",
+		ContentTypePdf:  "application/pdf; charset=utf-8",
+		ContentTypeToml: "application/toml; charset=utf-8",
 	}
 )
 
