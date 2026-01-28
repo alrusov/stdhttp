@@ -18,7 +18,7 @@ import (
 func (h *HTTP) debugBuildInfo(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	info, ok := debug.ReadBuildInfo()
 	if ok {
-		SendJSON(w, r, http.StatusNotFound, info)
+		SendJSON(w, r, http.StatusOK, info)
 		return
 	}
 
@@ -68,7 +68,7 @@ func (h *HTTP) debugFreeOSmem(id uint64, prefix string, path string, w http.Resp
 func (h *HTTP) debugGCstat(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var stat debug.GCStats
 	debug.ReadGCStats(&stat)
-	SendJSON(w, r, http.StatusNotFound, stat)
+	SendJSON(w, r, http.StatusOK, stat)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -77,7 +77,7 @@ func (h *HTTP) debugGCstat(id uint64, prefix string, path string, w http.Respons
 func (h *HTTP) debugMemStat(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) {
 	var stat runtime.MemStats
 	runtime.ReadMemStats(&stat)
-	SendJSON(w, r, http.StatusNotFound, stat)
+	SendJSON(w, r, http.StatusOK, stat)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
