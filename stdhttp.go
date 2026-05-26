@@ -400,3 +400,25 @@ func JSONResultWithDataHash(data any, useHash bool, hash string, srcHeaders misc
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
+
+func GetAbsoluteURL(r *http.Request) *url.URL {
+	scheme := "http"
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+		scheme = proto
+	} else if r.TLS != nil {
+		scheme = "https"
+	}
+
+	host := r.Host
+	if fwdHost := r.Header.Get("X-Forwarded-Host"); fwdHost != "" {
+		host = fwdHost
+	}
+
+	u := *r.URL
+	u.Scheme = scheme
+	u.Host = host
+
+	return &u
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
