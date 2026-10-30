@@ -280,18 +280,21 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authPath, exists := isPathInList(path, h.authEndpointsKeys)
 	if exists && len(h.listenerCfg.Auth.Endpoints[authPath]) != 0 {
 		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
-		if identity == nil && code != 0 {
+		if code == 0 || code%100 == 2 {
+			// Доступ открыт
+			if identity != nil {
+				Log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
+				r = AddValueToRequestContext(r, CtxIdentity, identity)
+			}
+		} else {
 			if len(w.Header()) == 0 {
+				// пишем соответствующие заголовки с полученным кодом
 				h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
 				Error(id, false, w, r, code, msg, nil)
 			}
 			return
 		}
 
-		if identity != nil {
-			Log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
-			r = AddValueToRequestContext(r, CtxIdentity, identity)
-		}
 	}
 
 	if !h.IsPathReplaced(path) {
