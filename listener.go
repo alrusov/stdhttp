@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -225,7 +226,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New %s request "%s" from %s`, id, r.Method, r.RequestURI, realIP)
+	Log.SecuredMessage(log.DEBUG, logReplaceRequest, `[%d] New %s request "%s" from %s`, id, r.Method, config.SecureText(r.RequestURI), realIP)
 
 	var err error
 	r.Body, err = BodyReader(r.Header, r.Body)
@@ -235,10 +236,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if Log.CurrentLogLevel() >= log.TRACE3 {
-		Log.Message(log.TRACE3, `[%d] Header: %v`, id, r.Header)
+		Log.SecuredMessage(log.TRACE3, logReplaceRequest, `[%d] Header: %v`, id, SecuredHeader(r.Header))
 		if Log.CurrentLogLevel() >= log.TRACE4 {
 			bb, _ := io.ReadAll(r.Body)
-			Log.Message(log.TRACE4, `[%d] Body: %q`, id, bb)
+			Log.SecuredMessage(log.TRACE4, logReplaceRequest, `[%d] Body: %q`, id, config.SecureText(string(bb)))
 			r.Body = io.NopCloser(bytes.NewBuffer(bb))
 		}
 	}
@@ -380,7 +381,31 @@ func isPathInList(path string, list misc.BoolMap) (pattern string, exists bool) 
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
+// Дополнительный фильтр приложения для журнала запроса (URI, заголовки, тело) -- поверх config.SecureText
 var logReplaceRequest = &misc.Replace{}
+
+// Заголовки с секретом по имени: значение целиком не нужно для разбора, а по тексту %v его не найти
+var reSecretHeader = regexp.MustCompile(`(?i)(?:authorization|cookie|password|passwd|pwd|secret|token|key|salt)$`)
+
+// SecuredHeader -- копия заголовков для журнала: значения заголовков с секретом (Authorization, Cookie,
+// Set-Cookie, *-Token, *-Key, ...) заменены на "*", остальные -- через config.SecureText
+func SecuredHeader(src http.Header) http.Header {
+	dst := make(http.Header, len(src))
+
+	for name, vals := range src {
+		v := make([]string, len(vals))
+		for i, s := range vals {
+			if reSecretHeader.MatchString(name) {
+				v[i] = "*"
+			} else {
+				v[i] = config.SecureText(s)
+			}
+		}
+		dst[name] = v
+	}
+
+	return dst
+}
 
 // SetLogFilterForRequest --
 func SetLogFilterForRequest(f *misc.Replace) {
