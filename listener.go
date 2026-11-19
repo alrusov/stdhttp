@@ -280,7 +280,8 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	authPath, exists := isPathInList(path, h.authEndpointsKeys)
 	if exists && len(h.listenerCfg.Auth.Endpoints[authPath]) != 0 {
-		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
+		tw := &trackingWriter{ResponseWriter: w}
+		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], tw, r)
 		if authPassed(code) {
 			// Доступ открыт
 			if identity != nil {
@@ -288,7 +289,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				r = AddValueToRequestContext(r, CtxIdentity, identity)
 			}
 		} else {
-			if len(w.Header()) == 0 {
+			// Способ входа мог ответить сам (keycloak -- редирект 302 на вход): тогда ничего не пишем.
+			// Только заголовки (keycloak после обновления токена -- Set-Cookie) ответом не считаются:
+			// раньше по непустым заголовкам отказ терялся и уходил пустой 200
+			if !tw.written {
 				// пишем соответствующие заголовки с полученным кодом
 				h.authHandlers.WriteAuthRequestHeaders(w, prefix, path)
 				Error(id, false, w, r, code, msg, nil)
@@ -377,6 +381,29 @@ func isPathInList(path string, list misc.BoolMap) (pattern string, exists bool) 
 	}
 
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// trackingWriter -- ResponseWriter для проверки доступа: запоминает, отправил ли способ входа ответ сам
+type trackingWriter struct {
+	http.ResponseWriter
+	written bool
+}
+
+func (w *trackingWriter) WriteHeader(code int) {
+	w.written = true
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *trackingWriter) Write(b []byte) (int, error) {
+	w.written = true
+	return w.ResponseWriter.Write(b)
+}
+
+// Unwrap -- для http.ResponseController
+func (w *trackingWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//

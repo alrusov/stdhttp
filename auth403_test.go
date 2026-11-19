@@ -22,6 +22,18 @@ func (m *testAuthMethod) Score() int                       { return 10 }
 func (m *testAuthMethod) WWWAuthHeader() (string, bool)    { return "Test", false }
 
 func (m *testAuthMethod) Check(id uint64, prefix string, path string, w http.ResponseWriter, r *http.Request) (*auth.Identity, bool, error) {
+	// Как keycloak после обновления токена: только заголовок, ответ не отправлен
+	if c := r.Header.Get("X-Test-Set-Cookie"); c != "" {
+		w.Header().Add("Set-Cookie", c)
+	}
+
+	// Как keycloak без входа: способ сам отвечает редиректом
+	if loc := r.Header.Get("X-Test-Redirect"); loc != "" {
+		w.Header().Set("Location", loc)
+		w.WriteHeader(http.StatusFound)
+		return nil, false, nil
+	}
+
 	u := r.Header.Get("X-Test-User")
 	if u == "" {
 		return nil, true, nil
@@ -124,6 +136,76 @@ func TestAuthPassed(t *testing.T) {
 	} {
 		if authPassed(code) != expected {
 			t.Errorf("authPassed(%d) = %v, expected %v", code, !expected, expected)
+		}
+	}
+}
+
+// TestAuthRefusalWithHeaders -- отказ не теряется, если способ входа выставил заголовки, но ответ не отправил
+// (keycloak: Set-Cookie после обновления токена); если способ ответил сам (редирект), ответ не перезаписывается
+func TestAuthRefusalWithHeaders(t *testing.T) {
+	if config.GetCommon() == nil {
+		config.SetCommon(&config.Common{LoadAvgPeriod: config.Duration(time.Minute)})
+	}
+
+	cfg := &config.Listener{
+		Auth: config.Auth{
+			Endpoints: map[string]misc.BoolMap{
+				"/api*": {"@admins": true},
+			},
+		},
+	}
+
+	reached := false
+	h, err := NewListener(cfg, &testHandler{reached: &reached})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = h.AddAuthHandler(&testAuthMethod{}); err != nil {
+		t.Fatal(err)
+	}
+
+	type testData struct {
+		user, group, cookie, redirect string
+		code                          int
+		reached                       bool
+	}
+
+	data := []testData{
+		{"user", "", "kc_access=new", "", http.StatusForbidden, false}, // раньше -- пустой 200
+		{"", "", "kc_access=new", "", http.StatusUnauthorized, false},  // раньше -- пустой 200
+		{"admin", "admins", "kc_access=new", "", http.StatusOK, true},  // доступ открыт, cookie уходит с ответом
+		{"", "", "", "https://kc/login", http.StatusFound, false},      // способ ответил сам -- не перезаписываем
+		{"user", "", "", "", http.StatusForbidden, false},              // без заголовков -- как раньше
+	}
+
+	for i, d := range data {
+		reached = false
+
+		r := httptest.NewRequest(http.MethodGet, "/api/objects", nil)
+		for k, v := range map[string]string{"X-Test-User": d.user, "X-Test-Group": d.group, "X-Test-Set-Cookie": d.cookie, "X-Test-Redirect": d.redirect} {
+			if v != "" {
+				r.Header.Set(k, v)
+			}
+		}
+
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+
+		if w.Code != d.code {
+			t.Errorf(`[%d] code %d, expected %d`, i, w.Code, d.code)
+		}
+		if reached != d.reached {
+			t.Errorf(`[%d] handler reached=%v, expected %v`, i, reached, d.reached)
+		}
+		if d.cookie != "" && w.Header().Get("Set-Cookie") != d.cookie {
+			t.Errorf(`[%d] Set-Cookie %q, expected %q`, i, w.Header().Get("Set-Cookie"), d.cookie)
+		}
+		if d.redirect != "" && w.Header().Get("Location") != d.redirect {
+			t.Errorf(`[%d] Location %q, expected %q`, i, w.Header().Get("Location"), d.redirect)
+		}
+		if d.redirect != "" && w.Body.Len() != 0 {
+			t.Errorf(`[%d] response of the auth method was overwritten: body %q`, i, w.Body.String())
 		}
 	}
 }
