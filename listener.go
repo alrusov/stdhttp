@@ -281,7 +281,7 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authPath, exists := isPathInList(path, h.authEndpointsKeys)
 	if exists && len(h.listenerCfg.Auth.Endpoints[authPath]) != 0 {
 		identity, code, msg := h.authHandlers.Check(id, prefix, path, h.listenerCfg.Auth.Endpoints[authPath], w, r)
-		if code == 0 || code%100 == 2 {
+		if authPassed(code) {
 			// Доступ открыт
 			if identity != nil {
 				Log.Message(log.DEBUG, `[%d] User "%s" logged in (%s)`, id, identity.User, identity.Method)
@@ -377,6 +377,13 @@ func isPathInList(path string, list misc.BoolMap) (pattern string, exists bool) 
 	}
 
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// authPassed -- результат проверки доступа: 0 (сейчас так отвечает auth) или любой 2xx (на будущее)
+func authPassed(code int) bool {
+	return code == 0 || code/100 == 2
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
